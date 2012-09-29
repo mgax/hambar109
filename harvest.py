@@ -112,6 +112,8 @@ def download_mof(file_path, overwrite=False):
         return
     fs_path.parent.makedirs_p()
     resp = requests.get(url, prefetch=False)
+    if resp.status_code != 200:
+        log.error("Request error at %r: %r", url, resp)
     tmp = tempfile.NamedTemporaryFile(dir=fs_path.parent,
                                       delete=False,
                                       prefix=fs_path.name + '-',
