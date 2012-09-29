@@ -51,8 +51,6 @@ def register_commands(manager):
 
     @manager.command
     def index():
-        download_urls = []
-        skip_urls = []
         resp = requests.get(MOF_URL)
         for link in links(resp.text):
             print>>sys.stderr, '>', link
