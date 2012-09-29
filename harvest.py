@@ -73,16 +73,24 @@ def register_commands(manager):
         download_mof(file_path)
 
     @manager.command
-    def schedule_link_downloads(limit='100'):
+    def schedule_downloads(limit='100'):
         links = path(os.environ['PUBDOCS_LINKS']).text().strip().split()
         scheduled = 0
-        for file_path in links:
+        skipped = 0
+        for url in links:
+            assert url.startswith(MOF_URL)
+            file_path = url[len(MOF_URL):]
             fs_path = build_fs_path(file_path)
-            if not fs_path.isfile():
-                download_mof.delay(file_path)
-                scheduled += 1
-                if scheduled > limit:
-                    break
+            if fs_path.isfile():
+                skipped += 1
+                continue
+
+            download_mof.delay(file_path)
+            scheduled += 1
+            if scheduled >= int(limit):
+                break
+
+        log.info('Scheduled %d downloads, skipped %d', scheduled, skipped)
 
 
 def appcontext(func):
