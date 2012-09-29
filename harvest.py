@@ -69,9 +69,9 @@ def register_commands(manager):
         download_mof(file_path)
 
     @manager.command
-    def schedule_link_downloads(start=0, count=10):
+    def schedule_link_downloads(start='0', count='10'):
         links = path(os.environ['PUBDOCS_LINKS']).text().strip().split()
-        for file_path in links[start:start+count]:
+        for file_path in links[int(start):int(start)+int(count)]:
             download_mof.delay(file_path)
 
 
