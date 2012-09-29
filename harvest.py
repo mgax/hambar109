@@ -1,3 +1,4 @@
+import os
 import sys
 import re
 import logging
@@ -66,6 +67,12 @@ def register_commands(manager):
     @manager.command
     def download(file_path):
         download_mof(file_path)
+
+    @manager.command
+    def schedule_link_downloads(start=0, count=10):
+        links = path(os.environ['PUBDOCS_LINKS']).text().strip().split()
+        for file_path in links[start:start+count]:
+            download_mof.delay(file_path)
 
 
 def appcontext(func):

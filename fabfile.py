@@ -159,6 +159,7 @@ PUBDOCS_CONFIG = {
                          ':cc011e2b752945b6895938893a8fa14a'
                          '@sentry.gerty.grep.ro/3'),
     'PUBDOCS_FILE_REPO': SARGE_HOME / 'var' / 'pubdocs-file-repo',
+    'PUBDOCS_LINKS': '/home/alexm/links.txt',
 }
 
 
