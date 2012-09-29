@@ -104,9 +104,12 @@ def appcontext(func):
 
 @celery.task
 @appcontext
-def download_mof(file_path):
+def download_mof(file_path, overwrite=False):
     url = MOF_URL + file_path
     fs_path = build_fs_path(file_path)
+    if fs_path.isfile():
+        log.info("File %r already exists, skipping", str(fs_path))
+        return
     fs_path.parent.makedirs_p()
     resp = requests.get(url, prefetch=False)
     tmp = tempfile.NamedTemporaryFile(dir=fs_path.parent,
