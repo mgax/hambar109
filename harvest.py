@@ -1,7 +1,11 @@
 import sys
 import re
 import requests
+from celery import Celery
 
+
+celery = Celery()
+celery.config_from_object('celeryconfig')
 
 _links_pattern = re.compile(r'<a href="([^"]+)"')
 
