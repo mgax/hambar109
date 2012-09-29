@@ -48,6 +48,10 @@ def links(html):
             yield link
 
 
+def build_fs_path(file_path):
+    return flask.current_app.config['PUBDOCS_FILE_REPO'] / file_path
+
+
 def register_commands(manager):
 
     @manager.command
@@ -69,10 +73,16 @@ def register_commands(manager):
         download_mof(file_path)
 
     @manager.command
-    def schedule_link_downloads(start='0', count='10'):
+    def schedule_link_downloads(limit='100'):
         links = path(os.environ['PUBDOCS_LINKS']).text().strip().split()
-        for file_path in links[int(start):int(start)+int(count)]:
-            download_mof.delay(file_path)
+        scheduled = 0
+        for file_path in links:
+            fs_path = build_fs_path(file_path)
+            if not fs_path.isfile():
+                download_mof.delay(file_path)
+                scheduled += 1
+                if scheduled > limit:
+                    break
 
 
 def appcontext(func):
@@ -88,7 +98,7 @@ def appcontext(func):
 @appcontext
 def download_mof(file_path):
     url = MOF_URL + file_path
-    fs_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / file_path
+    fs_path = build_fs_path(file_path)
     fs_path.parent.makedirs_p()
     resp = requests.get(url, prefetch=False)
     tmp = tempfile.NamedTemporaryFile(dir=fs_path.parent,
