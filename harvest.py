@@ -122,4 +122,4 @@ def download_mof(file_path, overwrite=False):
         for block in resp.iter_content(65536):
             tmp.write(block)
     path(tmp.name).rename(fs_path)
-    log.info("Downloaded %r (%d)", str(fs_path), fs_path.stat().st_size)
+    log.info("Downloaded %r (%d)", file_path, fs_path.stat().st_size)
