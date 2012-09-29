@@ -302,8 +302,6 @@ def install_redis():
                  "unixsocket {pubdocs_redis_var}/redis.sock\n"
                  "dir {pubdocs_redis_var}\n"
                  "loglevel notice\n"
-                 "appendonly yes\n"
-                 "appendfsync always\n"
                  .format(**env)),
         str(env['instance_dir'] / 'redis.conf'))
 
