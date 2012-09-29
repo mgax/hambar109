@@ -1,9 +1,15 @@
 import sys
 import re
 import logging
+import tempfile
+from path import path
 import requests
 from celery import Celery
 from celery.signals import setup_logging
+import flask
+
+
+MOF_URL = 'http://kurtyan.org/MOF/'
 
 
 celery = Celery()
@@ -47,15 +53,14 @@ def register_commands(manager):
     def index():
         download_urls = []
         skip_urls = []
-        mof_url = 'http://kurtyan.org/MOF/'
-        resp = requests.get(mof_url)
+        resp = requests.get(MOF_URL)
         for link in links(resp.text):
             print>>sys.stderr, '>', link
-            resp2 = requests.get(mof_url + link)
+            resp2 = requests.get(MOF_URL + link)
             for link2 in links(resp2.text):
                 print>>sys.stderr, '>>>', link2
-                resp3 = requests.get(mof_url + link + link2)
+                resp3 = requests.get(MOF_URL + link + link2)
                 for link3 in links(resp3.text):
                     print>>sys.stderr, '>>>>>', link3
-                    print mof_url + link + link2 + link3
-        print>>sys.stderr, len(mof_url)
+                    print MOF_URL + link + link2 + link3
+        print>>sys.stderr, len(MOF_URL)
