@@ -114,7 +114,8 @@ def download_mof(file_path, overwrite=False):
     resp = requests.get(url, prefetch=False)
     tmp = tempfile.NamedTemporaryFile(dir=fs_path.parent,
                                       delete=False,
-                                      prefix=fs_path.name)
+                                      prefix=fs_path.name + '-',
+                                      suffix='.tmp')
     with tmp:
         for block in resp.iter_content(65536):
             tmp.write(block)
