@@ -154,7 +154,6 @@ SARGE_HOME = path('/var/local/pubdocs')
 REDIS_VAR = SARGE_HOME / 'var' / 'pubdocs-redis'
 PUBDOCS_CONFIG = {
     'REDIS_SOCKET': REDIS_VAR / 'redis.sock',
-    'CUBE_COLLECTOR': "http://localhost:1080",
     'SENTRY_DSN': ('http://326f1cd02a1b474a9b973f5e2c74d76c'
                          ':cc011e2b752945b6895938893a8fa14a'
                          '@sentry.gerty.grep.ro/3'),
@@ -170,7 +169,6 @@ pubdocs = create_sarge_deployer('pubdocs', {
         'pubdocs_venv': SARGE_HOME / 'var' / 'pubdocs-venv',
         'pubdocs_bin': SARGE_HOME / 'var' / 'pubdocs-bin',
         'pubdocs_redis_var': REDIS_VAR,
-        'pubdocs_node_modules': SARGE_HOME / 'var' / 'pubdocs-node',
         'pubdocs_nginx_instance': "pubdocs-{sarge_instance}.gerty.grep.ro",
         'pubdocs_nginx_live': "pubdocs.gerty.grep.ro",
     })
@@ -178,8 +176,6 @@ pubdocs = create_sarge_deployer('pubdocs', {
 pubdocs.add_application('web', rolling_update=True)
 pubdocs.add_application('worker')
 pubdocs.add_application('redis')
-pubdocs.add_application('cubecol')
-pubdocs.add_application('cubeval')
 
 _pubdocs_env = pubdocs.env
 
@@ -208,14 +204,6 @@ def virtualenv():
         run("{pubdocs_venv}/bin/pip install "
             "-r {pubdocs_venv}/requirements.txt"
             .format(**env))
-
-
-@task
-def npm():
-    with settings(**_pubdocs_env):
-        run("mkdir -p {pubdocs_node_modules}".format(**env))
-        with cd(env['pubdocs_node_modules']):
-            run("npm install cube")
 
 
 @pubdocs.on('install', 'web')
@@ -312,16 +300,6 @@ def install_redis():
         mode=0755)
 
 
-@pubdocs.on('install', 'cubeval')
-def install_cubeval():
-    put(StringIO("#!/bin/bash\n"
-                 "cd {pubdocs_node_modules}/node_modules/cube\n"
-                 "exec node bin/evaluator.js\n"
-                 .format(**env)),
-        str(env['instance_dir'] / 'server'),
-        mode=0755)
-
-
 @pubdocs.on('install', 'worker')
 def install_worker_cronjob():
     put(StringIO("#!/usr/bin/env python\n"
@@ -336,16 +314,6 @@ def install_worker_cronjob():
                  "{sarge_home}/bin/sarge run {sarge_instance} ./cronjob\n"
                  .format(**env)),
         str(env['pubdocs_bin'] / 'worker-cron'),
-        mode=0755)
-
-
-@pubdocs.on('install', 'cubecol')
-def install():
-    cube_bin = env['pubdocs_node_modules'] / 'node_modules' / 'cube' / 'bin'
-    put(StringIO("#!/bin/bash\n"
-                 "exec node {cube_bin}/collector.js\n"
-                 .format(cube_bin=cube_bin, **env)),
-        str(env['instance_dir'] / 'server'),
         mode=0755)
 
 
