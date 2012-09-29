@@ -248,7 +248,7 @@ def install_flask_app():
     elif app_name == 'worker':
         put(StringIO("#!/bin/bash\n"
                      "export PYTHONPATH=`pwd`\n"
-                     "exec celery worker --app=harvest.celery --loglevel=INFO\n"
+                     "exec celery worker --app=harvest.celery\n"
                      .format(**env)),
             str(env['instance_dir'] / 'server'),
             mode=0755)
