@@ -1,11 +1,22 @@
 import sys
 import re
+import logging
 import requests
 from celery import Celery
+from celery.signals import setup_logging
 
 
 celery = Celery()
 celery.config_from_object('celeryconfig')
+
+
+@setup_logging.connect
+def configure_worker(sender=None, **extra):
+    from utils import set_up_logging
+    set_up_logging()
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 _links_pattern = re.compile(r'<a href="([^"]+)"')
 

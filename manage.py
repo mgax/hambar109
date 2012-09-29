@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import flask
 from flask.ext.script import Manager
 import harvest
@@ -17,4 +18,6 @@ harvest.register_commands(manager)
 
 
 if __name__ == '__main__':
+    from utils import set_up_logging
+    set_up_logging()
     manager.run()
