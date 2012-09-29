@@ -158,6 +158,7 @@ PUBDOCS_CONFIG = {
     'SENTRY_DSN': ('http://326f1cd02a1b474a9b973f5e2c74d76c'
                          ':cc011e2b752945b6895938893a8fa14a'
                          '@sentry.gerty.grep.ro/3'),
+    'PUBDOCS_FILE_REPO': SARGE_HOME / 'var' / 'pubdocs-file-repo',
 }
 
 

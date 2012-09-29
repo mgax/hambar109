@@ -64,3 +64,33 @@ def register_commands(manager):
                     print>>sys.stderr, '>>>>>', link3
                     print MOF_URL + link + link2 + link3
         print>>sys.stderr, len(MOF_URL)
+
+    @manager.command
+    def download(file_path):
+        download_mof(file_path)
+
+
+def appcontext(func):
+    def wrapper(*args, **kwargs):
+        import manage
+        app = manage.create_app()
+        with app.app_context():
+            return func(*args, **kwargs)
+    return wrapper
+
+
+@celery.task
+@appcontext
+def download_mof(file_path):
+    url = MOF_URL + file_path
+    fs_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / file_path
+    fs_path.parent.makedirs_p()
+    resp = requests.get(url, prefetch=False)
+    tmp = tempfile.NamedTemporaryFile(dir=fs_path.parent,
+                                      delete=False,
+                                      prefix=fs_path.name)
+    with tmp:
+        for block in resp.iter_content(65536):
+            tmp.write(block)
+    path(tmp.name).rename(fs_path)
+    log.info("Downloaded %r (%d)", str(fs_path), fs_path.stat().st_size)
