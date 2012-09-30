@@ -152,6 +152,8 @@ env['use_ssh_config'] = True
 
 SARGE_HOME = path('/var/local/pubdocs')
 REDIS_VAR = SARGE_HOME / 'var' / 'pubdocs-redis'
+ES_KIT = ('https://github.com/downloads/elasticsearch/'
+          'elasticsearch/elasticsearch-0.19.9.tar.gz')
 PUBDOCS_CONFIG = {
     'REDIS_SOCKET': REDIS_VAR / 'redis.sock',
     'SENTRY_DSN': ('http://326f1cd02a1b474a9b973f5e2c74d76c'
@@ -159,6 +161,8 @@ PUBDOCS_CONFIG = {
                          '@sentry.gerty.grep.ro/3'),
     'PUBDOCS_FILE_REPO': SARGE_HOME / 'var' / 'pubdocs-file-repo',
     'PUBDOCS_LINKS': '/home/alexm/links.txt',
+    'ES_HEAP_SIZE': '256m',
+    'ES_PATH_DATA': SARGE_HOME / 'var' / 'pubdocs-es-data',
 }
 
 
@@ -171,11 +175,17 @@ pubdocs = create_sarge_deployer('pubdocs', {
         'pubdocs_redis_var': REDIS_VAR,
         'pubdocs_nginx_instance': "pubdocs-{sarge_instance}.gerty.grep.ro",
         'pubdocs_nginx_live': "pubdocs.gerty.grep.ro",
+        'pubdocs_es': SARGE_HOME / 'var' / 'pubdocs-es',
+        'pubdocs_es_kit': ES_KIT,
+        'pubdocs_es_bin': (SARGE_HOME / 'var' / 'pubdocs-es' /
+                           'elasticsearch-0.19.9' / 'bin'),
+        'pubdocs_es_data': PUBDOCS_CONFIG['ES_PATH_DATA'],
     })
 
 pubdocs.add_application('web', rolling_update=True)
 pubdocs.add_application('worker')
 pubdocs.add_application('redis')
+pubdocs.add_application('es')
 
 _pubdocs_env = pubdocs.env
 
@@ -204,6 +214,14 @@ def virtualenv():
         run("{pubdocs_venv}/bin/pip install "
             "-r {pubdocs_venv}/requirements.txt"
             .format(**env))
+
+
+@task
+def elasticsearch():
+    with settings(**_pubdocs_env):
+        run("mkdir -p {pubdocs_es}".format(**env))
+        with cd(env['pubdocs_es']):
+            run("curl -L '{pubdocs_es_kit}' | tar xzf -".format(**env))
 
 
 @pubdocs.on('install', 'web')
@@ -295,6 +313,21 @@ def install_redis():
 
     put(StringIO("#!/bin/bash\n"
                  "exec redis-server redis.conf\n"
+                 .format(**env)),
+        str(env['instance_dir'] / 'server'),
+        mode=0755)
+
+
+@pubdocs.on('install', 'es')
+def install_es_runtime():
+    run("mkdir -p {pubdocs_es_data}")
+    put(StringIO('path.data: "${ES_PATH_DATA}"\n'
+                 'network.host: "127.0.0.1"\n'),
+        str(env['instance_dir'] / 'elasticsearch.yml'))
+
+    put(StringIO("#!/bin/bash\n"
+                 "exec {pubdocs_es_bin}/elasticsearch -f "
+                    "-Des.config=`pwd`/elasticsearch.yml\n"
                  .format(**env)),
         str(env['instance_dir'] / 'server'),
         mode=0755)
