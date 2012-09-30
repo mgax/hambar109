@@ -1,3 +1,4 @@
+from base64 import b64encode
 import flask
 import requests
 
@@ -39,3 +40,16 @@ def register_commands(manager):
         attach_resp = requests.put(es_url + '/mof/attachment/_mapping',
                                    data=flask.json.dumps(attachment_config))
         assert attach_resp.status_code == 200, repr(attach_resp)
+
+    @manager.command
+    def index(file_path):
+        """ Index a file from the repositoy. """
+        from harvest import build_fs_path
+        #print build_fs_path(file_path).stat().st_size
+        es_url = flask.current_app.config['PUBDOCS_ES_URL']
+
+        fs_path = build_fs_path(file_path)
+        index_data = {'file': b64encode(fs_path.bytes())}
+        index_resp = requests.post(es_url + '/mof/attachment/',
+                                   data=flask.json.dumps(index_data))
+        assert index_resp.status_code == 201, repr(index_resp)
