@@ -55,7 +55,8 @@ def build_fs_path(file_path):
 def register_commands(manager):
 
     @manager.command
-    def index():
+    def download_index():
+        """ Generate index of MOF downloadable files. """
         resp = requests.get(MOF_URL)
         for link in links(resp.text):
             print>>sys.stderr, '>', link
@@ -70,10 +71,12 @@ def register_commands(manager):
 
     @manager.command
     def download(file_path):
+        """ Download a file right now. """
         download_mof(file_path)
 
     @manager.command
     def schedule_downloads(limit='100'):
+        """ Schedule files for download by workers. """
         links = path(os.environ['PUBDOCS_LINKS']).text().strip().split()
         scheduled = 0
         skipped = 0
