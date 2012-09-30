@@ -154,6 +154,7 @@ SARGE_HOME = path('/var/local/pubdocs')
 REDIS_VAR = SARGE_HOME / 'var' / 'pubdocs-redis'
 ES_KIT = ('https://github.com/downloads/elasticsearch/'
           'elasticsearch/elasticsearch-0.19.9.tar.gz')
+ES_ATTACH_SPEC = 'elasticsearch/elasticsearch-mapper-attachments/1.6.0'
 PUBDOCS_CONFIG = {
     'REDIS_SOCKET': REDIS_VAR / 'redis.sock',
     'SENTRY_DSN': ('http://326f1cd02a1b474a9b973f5e2c74d76c'
@@ -178,6 +179,7 @@ pubdocs = create_sarge_deployer('pubdocs', {
         'pubdocs_nginx_live': "pubdocs.gerty.grep.ro",
         'pubdocs_es': SARGE_HOME / 'var' / 'pubdocs-es',
         'pubdocs_es_kit': ES_KIT,
+        'pubdocs_es_attach_spec': ES_ATTACH_SPEC,
         'pubdocs_es_bin': (SARGE_HOME / 'var' / 'pubdocs-es' /
                            'elasticsearch-0.19.9' / 'bin'),
         'pubdocs_es_data': PUBDOCS_CONFIG['ES_PATH_DATA'],
@@ -223,6 +225,8 @@ def elasticsearch():
         run("mkdir -p {pubdocs_es}".format(**env))
         with cd(env['pubdocs_es']):
             run("curl -L '{pubdocs_es_kit}' | tar xzf -".format(**env))
+            run("{pubdocs_es_bin}/plugin -install '{pubdocs_es_attach_spec}'"
+                .format(**env))
 
 
 @pubdocs.on('install', 'web')
