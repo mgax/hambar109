@@ -1,36 +1,38 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Search MOF</title>
-  </head>
+{% extends "layout.html" %}
 
-  <body>
+{% block content %}
 
+  <div class="pd-search">
     <form>
-      <input type="search" size="100"
+      <input type="search" placeholder="... text ..."
              name="q" value="{{ request.args.get('q', '') }}">
       <button type="submit">caută</button>
     </form>
+  </div>
 
-    {% if results %}
+  {% if results %}
+  <div class="row">
+    <div class="span12">
 
-      <p>{{ results['hits']['total'] }} hits</p>
+        <p>{{ results['hits']['total'] }} hits</p>
 
-      <ul>
-      {% for hit in results['hits']['hits'] %}
+        <ul class="pd-search-results">
+        {% for hit in results['hits']['hits'] %}
+          <li>
 
-        <li>
-          <p><tt>{{ hit['_id'] }}</tt></p>
-          {% for fragment in hit['highlight']['file'] %}
-            <p>{{ fragment|safe }}</p>
-          {% endfor %}
-        </li>
+            <p><tt>{{ hit['_id'] }}</tt></p>
 
-      {% endfor %}
-      </ul>
+            {% for fragment in hit['highlight']['file'] %}
+              <p>{{ fragment|safe }}</p>
+            {% endfor %}
 
-    {% endif %}
+          </li>
+        {% endfor %}
+        </ul>
 
-  </body>
-</html>
+    </div>
+  </div>
+  {% endif %}
+
+
+{% endblock %}
