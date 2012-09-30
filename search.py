@@ -3,7 +3,7 @@ import flask
 import requests
 
 
-def es_search(text):
+def es_search(text, fields=None):
     es_url = flask.current_app.config['PUBDOCS_ES_URL']
     search_data = {
         "fields": ["title"],
@@ -14,8 +14,10 @@ def es_search(text):
             "fields": {"file": {}},
         },
     }
-    search_resp = requests.get(es_url + '/_search',
-                               data=flask.json.dumps(search_data))
+    search_url = es_url + '/_search'
+    if fields is not None:
+        search_url += '?fields=' + ','.join(fields)
+    search_resp = requests.get(search_url, data=flask.json.dumps(search_data))
     assert search_resp.status_code == 200, repr(search_resp)
     return search_resp.json
 
@@ -27,7 +29,7 @@ search_pages = flask.Blueprint('search', __name__, template_folder='templates')
 def search():
     q = flask.request.args.get('q')
     if q:
-        results = es_search(q)
+        results = es_search(q, ['year', 'section', 'path'])
     else:
         results = None
     return flask.render_template('search.html', results=results)

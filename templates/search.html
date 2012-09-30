@@ -20,7 +20,9 @@
         {% for hit in results['hits']['hits'] %}
           <li>
 
-            <p><tt>{{ hit['_id'] }}</tt></p>
+            {% set path = hit['fields']['path'] %}
+            {% set kurtyan_url = "http://kurtyan.org/MOF/" + path %}
+            <h4><a class="pd-view" href="{{ kurtyan_url }}">{{ path }}</a></h4>
 
             {% if 'highlight' in hit %}
               {% for fragment in hit['highlight']['file'] %}
@@ -35,6 +37,5 @@
     </div>
   </div>
   {% endif %}
-
 
 {% endblock %}
