@@ -163,6 +163,7 @@ PUBDOCS_CONFIG = {
     'PUBDOCS_LINKS': '/home/alexm/links.txt',
     'ES_HEAP_SIZE': '256m',
     'ES_PATH_DATA': SARGE_HOME / 'var' / 'pubdocs-es-data',
+    'PUBDOCS_ES_URL': 'http://localhost:9200',
 }
 
 
