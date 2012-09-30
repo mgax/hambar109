@@ -3,6 +3,23 @@ import flask
 import requests
 
 
+def es_search(text):
+    es_url = flask.current_app.config['PUBDOCS_ES_URL']
+    search_data = {
+        "fields": ["title"],
+        "query": {
+            "query_string": {"query": text},
+        },
+        "highlight": {
+            "fields": {"file": {}},
+        },
+    }
+    search_resp = requests.get(es_url + '/_search',
+                               data=flask.json.dumps(search_data))
+    assert search_resp.status_code == 200, repr(search_resp)
+    return search_resp.json
+
+
 def register_commands(manager):
 
     @manager.command
@@ -56,16 +73,4 @@ def register_commands(manager):
     @manager.command
     def search(text):
         """ Search the index. """
-        es_url = flask.current_app.config['PUBDOCS_ES_URL']
-        search_data = {
-            "fields": ["title"],
-            "query": {
-                "query_string": {"query": text},
-            },
-            "highlight": {
-                "fields": {"file": {}},
-            },
-        }
-        search_resp = requests.get(es_url + '/_search',
-                                   data=flask.json.dumps(search_data))
-        print flask.json.dumps(search_resp.json, indent=2)
+        print flask.json.dumps(es_search(text), indent=2)
