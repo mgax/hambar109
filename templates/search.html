@@ -9,7 +9,7 @@
 
     <form>
       <input type="search" size="100"
-             name="q" value="{{ request.args.get('q') }}">
+             name="q" value="{{ request.args.get('q', '') }}">
       <button type="submit">caută</button>
     </form>
 
