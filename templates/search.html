@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Search MOF</title>
+  </head>
+
+  <body>
+
+    <form>
+      <input type="search" size="100"
+             name="q" value="{{ request.args.get('q') }}">
+      <button type="submit">caută</button>
+    </form>
+
+    {% if results %}
+
+      <p>{{ results['hits']['total'] }} hits</p>
+
+      <ul>
+      {% for hit in results['hits']['hits'] %}
+
+        <li>
+          <p><tt>{{ hit['_id'] }}</tt></p>
+          {% for fragment in hit['highlight']['file'] %}
+            <p>{{ fragment|safe }}</p>
+          {% endfor %}
+        </li>
+
+      {% endfor %}
+      </ul>
+
+    {% endif %}
+
+  </body>
+</html>

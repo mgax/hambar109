@@ -20,6 +20,19 @@ def es_search(text):
     return search_resp.json
 
 
+search_pages = flask.Blueprint('search', __name__, template_folder='templates')
+
+
+@search_pages.route('/')
+def search():
+    q = flask.request.args.get('q')
+    if q:
+        results = es_search(q)
+    else:
+        results = None
+    return flask.render_template('search.html', results=results)
+
+
 def register_commands(manager):
 
     @manager.command
