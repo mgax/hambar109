@@ -21,3 +21,21 @@ def register_commands(manager):
         create_resp = requests.put(es_url + '/mof',
                                    data=flask.json.dumps(index_config))
         assert create_resp.status_code == 200, repr(create_resp)
+
+        attachment_config = {
+            "attachment": {
+                "properties": {
+                    "file": {
+                        "type": "attachment",
+                        "fields": {
+                            "title": {"store": "yes"},
+                            "file": {"term_vector": "with_positions_offsets",
+                                     "store": "yes"}
+                        }
+                    }
+                }
+            }
+        }
+        attach_resp = requests.put(es_url + '/mof/attachment/_mapping',
+                                   data=flask.json.dumps(attachment_config))
+        assert attach_resp.status_code == 200, repr(attach_resp)
