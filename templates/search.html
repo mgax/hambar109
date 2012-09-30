@@ -22,9 +22,11 @@
 
             <p><tt>{{ hit['_id'] }}</tt></p>
 
-            {% for fragment in hit['highlight']['file'] %}
-              <p>{{ fragment|safe }}</p>
-            {% endfor %}
+            {% if 'highlight' in hit %}
+              {% for fragment in hit['highlight']['file'] %}
+                <p>{{ fragment|safe }}</p>
+              {% endfor %}
+            {% endif %}
 
           </li>
         {% endfor %}
