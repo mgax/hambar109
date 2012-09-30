@@ -53,3 +53,20 @@ def register_commands(manager):
         index_resp = requests.post(es_url + '/mof/attachment/',
                                    data=flask.json.dumps(index_data))
         assert index_resp.status_code == 201, repr(index_resp)
+
+    @manager.command
+    def search(text):
+        """ Search the index. """
+        es_url = flask.current_app.config['PUBDOCS_ES_URL']
+        search_data = {
+            "fields" : ["title"],
+            "query" : {
+                "query_string": {"query": text},
+            },
+            "highlight": {
+                "fields": {"file": {}},
+            },
+        }
+        search_resp = requests.get(es_url + '/_search',
+                                   data=flask.json.dumps(search_data))
+        print flask.json.dumps(search_resp.json, indent=2)
