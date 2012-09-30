@@ -54,18 +54,18 @@ def register_commands(manager):
         assert create_resp.status_code == 200, repr(create_resp)
 
         attachment_config = {
-            "attachment": {
+            "document": {
                 "properties": {
                     "file": {
                         "type": "attachment",
                         "fields": {
                             "title": {"store": "yes"},
-                            "file": {"term_vector": "with_positions_offsets",
-                                     "store": "yes"}
-                        }
-                    }
-                }
-            }
+                            "file": {"store": "yes",
+                                     "term_vector": "with_positions_offsets"},
+                        },
+                    },
+                },
+            },
         }
         attach_resp = requests.put(es_url + '/mof/attachment/_mapping',
                                    data=flask.json.dumps(attachment_config))
@@ -77,8 +77,14 @@ def register_commands(manager):
         from harvest import build_fs_path
         es_url = flask.current_app.config['PUBDOCS_ES_URL']
 
+        (section, year) = file_path.split('/')[:2]
         fs_path = build_fs_path(file_path)
-        index_data = {'file': b64encode(fs_path.bytes())}
+        index_data = {
+            'file': b64encode(fs_path.bytes()),
+            'path': file_path,
+            'year': int(year),
+            'section': int(section[3:]),
+        }
         index_resp = requests.post(es_url + '/mof/attachment/',
                                    data=flask.json.dumps(index_data))
         assert index_resp.status_code == 201, repr(index_resp)
