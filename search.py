@@ -14,9 +14,9 @@ def register_commands(manager):
         assert del_resp.status_code in [200, 404], repr(del_resp)
 
         index_config = {
-            "settings" : {
-                "index" : {"number_of_shards": 1,
-                           "number_of_replicas": 0},
+            "settings": {
+                "index": {"number_of_shards": 1,
+                          "number_of_replicas": 0},
             },
         }
         create_resp = requests.put(es_url + '/mof',
@@ -45,7 +45,6 @@ def register_commands(manager):
     def index(file_path):
         """ Index a file from the repositoy. """
         from harvest import build_fs_path
-        #print build_fs_path(file_path).stat().st_size
         es_url = flask.current_app.config['PUBDOCS_ES_URL']
 
         fs_path = build_fs_path(file_path)
@@ -59,8 +58,8 @@ def register_commands(manager):
         """ Search the index. """
         es_url = flask.current_app.config['PUBDOCS_ES_URL']
         search_data = {
-            "fields" : ["title"],
-            "query" : {
+            "fields": ["title"],
+            "query": {
                 "query_string": {"query": text},
             },
             "highlight": {
