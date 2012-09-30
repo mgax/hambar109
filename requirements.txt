@@ -12,3 +12,4 @@ python-dateutil==1.5
 celery-redis-unixsocket==0.2
 redis==2.6.2
 path.py==2.4
+flup==1.0.3.dev-20110405
