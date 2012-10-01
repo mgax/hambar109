@@ -38,6 +38,7 @@ def search():
 
     else:
         results = None
+        next_url = None
 
     return flask.render_template('search.html', **{
         'results': results,
