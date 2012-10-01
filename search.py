@@ -29,13 +29,20 @@ search_pages = flask.Blueprint('search', __name__, template_folder='templates')
 @search_pages.route('/')
 def search():
     args = flask.request.args
+
     q = args.get('q')
     if q:
         page = args.get('page', 1, type=int)
         results = es_search(q, ['year', 'section', 'path'], page=page)
+        next_url = flask.url_for('.search', page=page+1, q=q)
+
     else:
         results = None
-    return flask.render_template('search.html', results=results)
+
+    return flask.render_template('search.html', **{
+        'results': results,
+        'next_url': next_url,
+    })
 
 
 def register_commands(manager):
