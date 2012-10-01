@@ -283,7 +283,9 @@ def link_nginx(server_name=None):
             {'type': 'fcgi', 'url': '/',
              'socket': 'unix:' + instance_dir / 'fcgi.sock'},
             {'type': 'static', 'url': '/static',
-             'path': instance_dir / 'pubdocs' / 'static'},
+             'path': instance_dir / 'static'},
+            {'type': 'proxy', 'url': '/static/lib',
+             'upstream_url': 'http://grep.ro/quickpub/lib'},
         ],
     }
 
