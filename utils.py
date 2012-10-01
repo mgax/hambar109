@@ -7,4 +7,4 @@ def set_up_logging():
     stderr = logging.StreamHandler()
     stderr.setFormatter(logging.Formatter(LOG_FORMAT))
     logging.getLogger().addHandler(stderr)
-    logging.getLogger('werkzeug').setLevel(logging.INFO)
+    #logging.getLogger('werkzeug').setLevel(logging.INFO)
