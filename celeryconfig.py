@@ -1,6 +1,6 @@
 import os
 
-BROKER_TRANSPORT = 'celery_redis_unixsocket.broker.Transport'
-BROKER_HOST = os.environ.get('REDIS_SOCKET')
-BROKER_VHOST = 0
+
+BROKER_URL = 'redis://localhost:{PUBDOCS_REDIS_PORT}/0'.format(**os.environ)
+CELERY_RESULT_BACKEND = BROKER_URL
 CELERYD_CONCURRENCY = 1

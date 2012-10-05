@@ -42,11 +42,12 @@ harvest.register_commands(manager)
 search.register_commands(manager)
 
 
-@manager.option('-s', '--socket')
-def runfcgi(socket):
+@manager.option('-p', '--port')
+def runfcgi(port):
     from flup.server.fcgi import WSGIServer
     app = create_app()
-    WSGIServer(app, debug=app.debug, bindAddress=socket, umask=0).run()
+    addr = ('127.0.0.1', int(port))
+    WSGIServer(app, debug=app.debug, bindAddress=addr).run()
 
 
 if __name__ == '__main__':
