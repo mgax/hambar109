@@ -1,6 +1,7 @@
 from base64 import b64encode
 import flask
 import requests
+import sys
 
 
 def es_search(text, fields=None, page=1, per_page=20):
@@ -87,22 +88,46 @@ def register_commands(manager):
     @manager.command
     def index(file_path):
         """ Index a file from the repositoy. """
-        from harvest import build_fs_path
-        es_url = flask.current_app.config['PUBDOCS_ES_URL']
+        try:
+            from harvest import build_fs_path
+            es_url = flask.current_app.config['PUBDOCS_ES_URL']
 
-        (section, year, name) = file_path.split('/')
-        fs_path = build_fs_path(file_path)
-        index_data = {
-            'file': b64encode(fs_path.bytes()),
-            'path': file_path,
-            'year': int(year),
-            'section': int(section[3:]),
-        }
-        index_resp = requests.post(es_url + '/mof/attachment/' + name,
-                                   data=flask.json.dumps(index_data))
-        assert index_resp.status_code == 201, repr(index_resp)
+            (section, year, name) = file_path.split('/')
+            fs_path = build_fs_path(file_path)
+            index_data = {
+                'file': b64encode(fs_path.bytes()),
+                'path': file_path,
+                'year': int(year),
+                'section': int(section[3:]),
+            }
+            index_resp = requests.post(es_url + '/mof/attachment/' + name,
+                                       data=flask.json.dumps(index_data))
+            assert index_resp.status_code == 201, repr(index_resp)
+        except Exception as exp:
+            if index_resp.status_code is not 200:
+                raise exp
 
     @manager.command
     def search(text):
         """ Search the index. """
         print flask.json.dumps(es_search(text), indent=2)
+
+    @manager.command
+    def index_section(section, ext):
+        """ Bulk index files from specified section and and with corres. extension. """
+        import os
+        import subprocess
+        section_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / section
+        total = int(subprocess.check_output(
+                        'find %s -name "*%s" | wc -l' %(str(section_path), ext),
+                        shell=True))
+        indexed = 0
+        for year in os.listdir(section_path):
+            year_path = section_path / year
+            for doc_path in year_path.files():
+                if doc_path.ext == ext:
+                    name = doc_path.name
+                    index('/'.join([section, year, name]))
+                    indexed+=1
+                    sys.stdout.write("\r%i/%i" %(indexed, total))
+                    sys.stdout.flush()
