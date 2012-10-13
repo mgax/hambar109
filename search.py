@@ -1,7 +1,10 @@
+# -*- coding: utf-8 -*-
 from base64 import b64encode
+from unidecode import unidecode
 import flask
 import requests
 import sys
+import pdb
 
 
 def es_search(text, fields=None, page=1, per_page=20):
@@ -108,6 +111,65 @@ def register_commands(manager):
                 raise exp
 
     @manager.command
+    def clean(file_path, debug):
+        """ Index a file from the repositoy. """
+        if not debug=='debug':
+            debug = False
+        from harvest import build_fs_path
+        es_url = flask.current_app.config['PUBDOCS_ES_URL']
+
+        (section, year, name) = file_path.split('/')
+        fs_path = build_fs_path(file_path)
+        import tempfile
+        cursor = 0
+        total = fs_path.getsize()
+        chars_mapping = {
+            '\xc8\x99': 's',
+            '\xC5\x9E': 'S',
+            '\xc8\x9b': 't',
+            '\xc4\x83': 'a',
+            '\xc4\x82': 'A',
+            '\xc3\x82': 'A',
+            '\xc8\x98': 'A',
+            '\xc8\x9a': 'T',
+            '\xc3\x8e': 'I',
+            '\xc3\xae': 'i',
+            '\xc3\xa2': 'a',
+            '\xc4\x83': 'a',
+        }
+        if debug:
+            import codecs
+            def custom_handler(err):
+                raise Exception(err.object)
+            codecs.register_error('raise', custom_handler)
+        with fs_path.open() as data:
+            target_name = (fs_path.namebase + '.cln')
+            target_path = (fs_path.dirname() / target_name)
+            if target_path.exists():
+                target_path.remove()
+            with target_path.open('a') as cleaned:
+                chunk = data.read(100)
+                while chunk:
+                    while (chunk[-1] not in [' ', '.'] and
+                          (cursor < total)):
+                        chunk+=data.read(1)
+                        cursor+=1
+                    chunk = unidecode(chunk)
+                    cleaned.write(chunk)
+                    chunk = data.read(100)
+                    cursor+=len(chunk)
+                    try:
+                        chunk.decode('ascii', 'raise')
+                    except Exception as exp:
+                        for bad, good in chars_mapping.iteritems():
+                            chunk = chunk.replace(bad, good)
+                        if debug:
+                            import pdb; pdb.set_trace()
+                    if debug:
+                        sys.stdout.write("\r%i/%i" %(cursor, total))
+                cleaned.flush()
+
+    @manager.command
     def search(text):
         """ Search the index. """
         print flask.json.dumps(es_search(text), indent=2)
@@ -127,7 +189,8 @@ def register_commands(manager):
             for doc_path in year_path.files():
                 if doc_path.ext == ext:
                     name = doc_path.name
-                    index('/'.join([section, year, name]))
+                    clean('/'.join([section, year, name]), False)
+                    index('/'.join([section, year, name.replace(ext, '.cln')]))
                     indexed+=1
                     sys.stdout.write("\r%i/%i" %(indexed, total))
                     sys.stdout.flush()
