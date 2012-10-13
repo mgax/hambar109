@@ -125,8 +125,10 @@ def register_commands(manager):
         total = fs_path.getsize()
         chars_mapping = {
             '\xc8\x99': 's',
+            '\xc2\xba': 's',
             '\xC5\x9E': 'S',
             '\xc8\x9b': 't',
+            '\xc3\xbe': 't',
             '\xc4\x83': 'a',
             '\xc4\x82': 'A',
             '\xc3\x82': 'A',
@@ -136,12 +138,16 @@ def register_commands(manager):
             '\xc3\xae': 'i',
             '\xc3\xa2': 'a',
             '\xc4\x83': 'a',
+            '\xc3\xa3': 'a',
+            '\xc3\x91': '--',
+            '\xe2\x80\x94': '-',
+            '\xe2\x80\x93': '-'
         }
         if debug:
             import codecs
             def custom_handler(err):
                 raise Exception(err.object)
-            codecs.register_error('raise', custom_handler)
+            codecs.register_error('custom_handler', custom_handler)
         with fs_path.open() as data:
             target_name = (fs_path.namebase + '.cln')
             target_path = (fs_path.dirname() / target_name)
@@ -150,21 +156,20 @@ def register_commands(manager):
             with target_path.open('a') as cleaned:
                 chunk = data.read(100)
                 while chunk:
-                    while (chunk[-1] not in [' ', '.'] and
+                    while (chunk[-1] not in ['\n'] and
                           (cursor < total)):
                         chunk+=data.read(1)
                         cursor+=1
-                    chunk = unidecode(chunk)
-                    cleaned.write(chunk)
-                    chunk = data.read(100)
-                    cursor+=len(chunk)
                     try:
-                        chunk.decode('ascii', 'raise')
+                        chunk.decode('ascii', 'custom_handler')
                     except Exception as exp:
                         for bad, good in chars_mapping.iteritems():
                             chunk = chunk.replace(bad, good)
                         if debug:
                             import pdb; pdb.set_trace()
+                    cleaned.write(chunk)
+                    chunk = data.read(100)
+                    cursor+=len(chunk)
                     if debug:
                         sys.stdout.write("\r%i/%i" %(cursor, total))
                 cleaned.flush()
