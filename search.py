@@ -1,6 +1,10 @@
+# -*- coding: utf-8 -*-
 from base64 import b64encode
+from unidecode import unidecode
 import flask
 import requests
+import sys
+import pdb
 
 
 def es_search(text, fields=None, page=1, per_page=20):
@@ -87,22 +91,111 @@ def register_commands(manager):
     @manager.command
     def index(file_path):
         """ Index a file from the repositoy. """
+        try:
+            from harvest import build_fs_path
+            es_url = flask.current_app.config['PUBDOCS_ES_URL']
+
+            (section, year, name) = file_path.split('/')
+            fs_path = build_fs_path(file_path)
+            index_data = {
+                'file': b64encode(fs_path.bytes()),
+                'path': file_path,
+                'year': int(year),
+                'section': int(section[3:]),
+            }
+            index_resp = requests.post(es_url + '/mof/attachment/' + name,
+                                       data=flask.json.dumps(index_data))
+            assert index_resp.status_code == 201, repr(index_resp)
+        except Exception as exp:
+            if index_resp.status_code is not 200:
+                raise exp
+
+    @manager.command
+    def clean(file_path, debug):
+        """ Index a file from the repositoy. """
+        if not debug=='debug':
+            debug = False
         from harvest import build_fs_path
         es_url = flask.current_app.config['PUBDOCS_ES_URL']
 
         (section, year, name) = file_path.split('/')
         fs_path = build_fs_path(file_path)
-        index_data = {
-            'file': b64encode(fs_path.bytes()),
-            'path': file_path,
-            'year': int(year),
-            'section': int(section[3:]),
+        import tempfile
+        cursor = 0
+        total = fs_path.getsize()
+        chars_mapping = {
+            '\xc8\x99': 's',
+            '\xc2\xba': 's',
+            '\xC5\x9E': 'S',
+            '\xc8\x9b': 't',
+            '\xc3\xbe': 't',
+            '\xc4\x83': 'a',
+            '\xc4\x82': 'A',
+            '\xc3\x82': 'A',
+            '\xc8\x98': 'A',
+            '\xc8\x9a': 'T',
+            '\xc3\x8e': 'I',
+            '\xc3\xae': 'i',
+            '\xc3\xa2': 'a',
+            '\xc4\x83': 'a',
+            '\xc3\xa3': 'a',
+            '\xc3\x91': '--',
+            '\xe2\x80\x94': '-',
+            '\xe2\x80\x93': '-'
         }
-        index_resp = requests.post(es_url + '/mof/attachment/' + name,
-                                   data=flask.json.dumps(index_data))
-        assert index_resp.status_code == 201, repr(index_resp)
+        if debug:
+            import codecs
+            def custom_handler(err):
+                raise Exception(err.object)
+            codecs.register_error('custom_handler', custom_handler)
+        with fs_path.open() as data:
+            target_name = (fs_path.namebase + '.cln')
+            target_path = (fs_path.dirname() / target_name)
+            if target_path.exists():
+                target_path.remove()
+            with target_path.open('a') as cleaned:
+                chunk = data.read(100)
+                while chunk:
+                    while (chunk[-1] not in ['\n'] and
+                          (cursor < total)):
+                        chunk+=data.read(1)
+                        cursor+=1
+                    try:
+                        chunk.decode('ascii', 'custom_handler')
+                    except Exception as exp:
+                        for bad, good in chars_mapping.iteritems():
+                            chunk = chunk.replace(bad, good)
+                        if debug:
+                            import pdb; pdb.set_trace()
+                    cleaned.write(chunk)
+                    chunk = data.read(100)
+                    cursor+=len(chunk)
+                    if debug:
+                        sys.stdout.write("\r%i/%i" %(cursor, total))
+                cleaned.flush()
 
     @manager.command
     def search(text):
         """ Search the index. """
         print flask.json.dumps(es_search(text), indent=2)
+
+    @manager.command
+    def index_section(section, ext):
+        """ Bulk index files from specified section and and with corres. extension. """
+        import os
+        import subprocess
+        section_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / section
+        total = int(subprocess.check_output(
+                        'find %s -name "*%s" | wc -l' %(str(section_path), ext),
+                        shell=True))
+        indexed = 0
+        for year in os.listdir(section_path):
+            year_path = section_path / year
+            for doc_path in year_path.files():
+                if doc_path.ext == ext:
+                    name = doc_path.name
+                    clean('/'.join([section, year, name]), False)
+                    index('/'.join([section, year, name.replace(ext, '.cln')]))
+                    indexed+=1
+                    sys.stdout.write("\r%i/%i" %(indexed, total))
+                    sys.stdout.flush()
