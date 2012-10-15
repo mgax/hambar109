@@ -91,24 +91,20 @@ def register_commands(manager):
     @manager.command
     def index(file_path):
         """ Index a file from the repositoy. """
-        try:
-            from harvest import build_fs_path
-            es_url = flask.current_app.config['PUBDOCS_ES_URL']
+        from harvest import build_fs_path
+        es_url = flask.current_app.config['PUBDOCS_ES_URL']
 
-            (section, year, name) = file_path.split('/')
-            fs_path = build_fs_path(file_path)
-            index_data = {
-                'file': b64encode(fs_path.bytes()),
-                'path': file_path,
-                'year': int(year),
-                'section': int(section[3:]),
-            }
-            index_resp = requests.post(es_url + '/mof/attachment/' + name,
-                                       data=flask.json.dumps(index_data))
-            assert index_resp.status_code == 201, repr(index_resp)
-        except Exception as exp:
-            if index_resp.status_code is not 200:
-                raise exp
+        (section, year, name) = file_path.split('/')
+        fs_path = build_fs_path(file_path)
+        index_data = {
+            'file': b64encode(fs_path.bytes()),
+            'path': file_path,
+            'year': int(year),
+            'section': int(section[3:]),
+        }
+        index_resp = requests.post(es_url + '/mof/attachment/' + name,
+                                   data=flask.json.dumps(index_data))
+        assert index_resp.status_code in [200, 201], repr(index_resp)
 
     @manager.command
     def clean(file_path, debug):
