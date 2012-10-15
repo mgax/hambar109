@@ -4,6 +4,8 @@ import flask
 import requests
 import sys
 
+import utils
+
 
 def es_search(text, fields=None, page=1, per_page=20):
     es_url = flask.current_app.config['PUBDOCS_ES_URL']
@@ -115,26 +117,6 @@ def register_commands(manager):
         fs_path = build_fs_path(file_path)
         cursor = 0
         total = fs_path.getsize()
-        chars_mapping = {
-            '\xc8\x99': 's',
-            '\xc2\xba': 's',
-            '\xC5\x9E': 'S',
-            '\xc8\x9b': 't',
-            '\xc3\xbe': 't',
-            '\xc4\x83': 'a',
-            '\xc4\x82': 'A',
-            '\xc3\x82': 'A',
-            '\xc8\x98': 'A',
-            '\xc8\x9a': 'T',
-            '\xc3\x8e': 'I',
-            '\xc3\xae': 'i',
-            '\xc3\xa2': 'a',
-            '\xc4\x83': 'a',
-            '\xc3\xa3': 'a',
-            '\xc3\x91': '--',
-            '\xe2\x80\x94': '-',
-            '\xe2\x80\x93': '-'
-        }
         if debug:
             def custom_handler(err):
                 raise Exception(err.object)
@@ -156,11 +138,16 @@ def register_commands(manager):
                         cursor += 1
                     try:
                         chunk.decode('ascii', 'custom_handler')
-                    except Exception:
-                        for bad, good in chars_mapping.iteritems():
+                    except Exception as exp:
+                        #getting here means it needs correction
+                        for bad, good in utils.chars_mapping.iteritems():
                             chunk = chunk.replace(bad, good)
-                        if debug:
-                            import pdb; pdb.set_trace()
+                        try:
+                            chunk.decode('ascii', 'custom_handler')
+                        except Exception as exp:
+                            #getting hear means no correction found
+                            if debug:
+                                import pdb; pdb.set_trace()
                     cleaned.write(chunk)
                     chunk = data.read(100)
                     cursor += len(chunk)
@@ -174,12 +161,11 @@ def register_commands(manager):
         print flask.json.dumps(es_search(text), indent=2)
 
     @manager.command
-    def index_section(section, ext):
-        """
-        Bulk index files from specified section and and with corres. extension.
-        """
+    def index_section(section, ext, debug):
+        """ Bulk index files from specified section and and with corres. extension. """
         import os
         import subprocess
+
         section_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / section
         args = 'find %s -name "*%s" | wc -l' % (str(section_path), ext)
         total = int(subprocess.check_output(args, shell=True))
@@ -189,7 +175,7 @@ def register_commands(manager):
             for doc_path in year_path.files():
                 if doc_path.ext == ext:
                     name = doc_path.name
-                    clean('/'.join([section, year, name]), False)
+                    clean('/'.join([section, year, name]), debug)
                     index('/'.join([section, year, name.replace(ext, '.cln')]))
                     indexed += 1
                     sys.stdout.write("\r%i/%i" % (indexed, total))
