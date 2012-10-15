@@ -3,6 +3,10 @@ from base64 import b64encode
 import flask
 import requests
 import sys
+import subprocess
+from path import path
+from tempfile import NamedTemporaryFile as NamedTempFile
+from tempfile import TemporaryFile
 
 import utils
 
@@ -93,28 +97,35 @@ def register_commands(manager):
         """ Index a file from the repositoy. """
         from harvest import build_fs_path
         es_url = flask.current_app.config['PUBDOCS_ES_URL']
+        repo = flask.current_app.config['PUBDOCS_FILE_REPO'] / ''
 
-        (section, year, name) = file_path.split('/')
+        (section, year, name) = file_path.replace(repo, "").split('/')
         fs_path = build_fs_path(file_path)
-        index_data = {
-            'file': b64encode(fs_path.bytes()),
-            'path': file_path,
-            'year': int(year),
-            'section': int(section[3:]),
-        }
-        index_resp = requests.post(es_url + '/mof/attachment/' + name,
-                                   data=flask.json.dumps(index_data))
-        assert index_resp.status_code in [200, 201], repr(index_resp)
+        with NamedTempFile(mode='w+b', delete=True) as temp:
+            try:
+                subprocess.check_call('pdftotext %s %s' %(fs_path, temp.name),
+                                      shell=True)
+            except Exception as exp:
+                print exp
 
-    @manager.command
+            clean(temp.name, False)
+            index_data = {
+                'file': b64encode(temp.read()),
+                'path': file_path,
+                'year': int(year),
+                'section': int(section[3:]),
+            }
+            index_resp = requests.post(es_url + '/mof/attachment/' + name,
+                                       data=flask.json.dumps(index_data))
+            assert index_resp.status_code in [200, 201], repr(index_resp)
+            if index_resp.status_code == 200:
+                print 'Skipping indexing of %s. Already indexed!' %file_path
+
     def clean(file_path, debug):
         """ Index a file from the repositoy. """
         if not debug == 'debug':
             debug = False
-        from harvest import build_fs_path
-
-        (section, year, name) = file_path.split('/')
-        fs_path = build_fs_path(file_path)
+        fs_path = path(file_path)
         cursor = 0
         total = fs_path.getsize()
         if debug:
@@ -124,12 +135,8 @@ def register_commands(manager):
             import codecs
             codecs.register_error('custom_handler', custom_handler)
 
-        with fs_path.open() as data:
-            target_name = (fs_path.namebase + '.cln')
-            target_path = (fs_path.dirname() / target_name)
-            if target_path.exists():
-                target_path.remove()
-            with target_path.open('a') as cleaned:
+        with fs_path.open('r') as data:
+            with NamedTempFile(mode='a', delete=False) as cleaned:
                 chunk = data.read(100)
                 while chunk:
                     while (chunk[-1] not in ['\n'] and
@@ -151,9 +158,10 @@ def register_commands(manager):
                     cleaned.write(chunk)
                     chunk = data.read(100)
                     cursor += len(chunk)
-                    if debug:
-                        sys.stdout.write("\r%i/%i" % (cursor, total))
                 cleaned.flush()
+        with open(cleaned.name, 'rb') as f:
+            with fs_path.open('wb') as origin:
+                origin.write(f.read())
 
     @manager.command
     def search(text):
@@ -175,8 +183,7 @@ def register_commands(manager):
             for doc_path in year_path.files():
                 if doc_path.ext == ext:
                     name = doc_path.name
-                    clean('/'.join([section, year, name]), debug)
-                    index('/'.join([section, year, name.replace(ext, '.cln')]))
+                    index(doc_path)
                     indexed += 1
                     sys.stdout.write("\r%i/%i" % (indexed, total))
                     sys.stdout.flush()
