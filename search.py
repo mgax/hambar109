@@ -4,11 +4,16 @@ import flask
 import requests
 import sys
 import subprocess
+from celery import Celery
 from path import path
 from tempfile import NamedTemporaryFile as NamedTempFile
 from tempfile import TemporaryFile
 
 import utils
+
+
+celery = Celery()
+celery.config_from_object('celeryconfig')
 
 
 def es_search(text, fields=None, page=1, per_page=20):
@@ -92,6 +97,7 @@ def register_commands(manager):
                                    data=flask.json.dumps(attachment_config))
         assert attach_resp.status_code == 200, repr(attach_resp)
 
+    @celery.task
     @manager.command
     def index(file_path):
         """ Index a file from the repositoy. """
@@ -183,7 +189,7 @@ def register_commands(manager):
             for doc_path in year_path.files():
                 if doc_path.ext == ext:
                     name = doc_path.name
-                    index(doc_path)
+                    index.delay(doc_path)
                     indexed += 1
                     sys.stdout.write("\r%i/%i" % (indexed, total))
                     sys.stdout.flush()
