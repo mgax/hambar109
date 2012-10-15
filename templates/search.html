@@ -21,7 +21,7 @@
         {% for hit in results['hits']['hits'] %}
           <li>
 
-            {% set path = hit['fields']['path'] %}
+            {% set path = hit['fields']['path'].replace('.cln', '.pdf') %}
             {% set kurtyan_url = "http://kurtyan.org/MOF/" + path %}
             <h4><a class="pd-view" href="{{ kurtyan_url }}">{{ path }}</a></h4>
 
