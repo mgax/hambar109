@@ -4,8 +4,10 @@ import flask
 import requests
 import sys
 import subprocess
-from celery import Celery
+import logging
 from path import path
+from celery import Celery
+from celery.signals import setup_logging
 from tempfile import NamedTemporaryFile as NamedTempFile
 from tempfile import TemporaryFile
 
@@ -14,6 +16,14 @@ import utils
 
 celery = Celery()
 celery.config_from_object('celeryconfig')
+
+@setup_logging.connect
+def configure_worker(sender=None, **extra):
+    from utils import set_up_logging
+    set_up_logging()
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 
 def es_search(text, fields=None, page=1, per_page=20):
@@ -61,7 +71,7 @@ def index(file_path):
             subprocess.check_call('pdftotext %s %s' %(fs_path, temp.name),
                                   shell=True)
         except Exception as exp:
-            print exp
+            log.critical(exp)
 
         clean(temp.name, False)
         index_data = {
@@ -70,11 +80,12 @@ def index(file_path):
             'year': int(year),
             'section': int(section[3:]),
         }
+        log.info('Indexing %s' %file_path)
         index_resp = requests.post(es_url + '/mof/attachment/' + name,
                                    data=flask.json.dumps(index_data))
         assert index_resp.status_code in [200, 201], repr(index_resp)
         if index_resp.status_code == 200:
-            print 'Skipping indexing of %s. Already indexed!' %file_path
+            log.info('Skipping. Already indexed!' %file_path)
 
 
 def clean(file_path, debug):
