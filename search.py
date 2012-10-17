@@ -10,6 +10,7 @@ from celery import Celery
 from celery.signals import setup_logging
 from tempfile import NamedTemporaryFile as NamedTempFile
 from tempfile import TemporaryFile
+#from harvest import appcontext
 
 import utils
 
