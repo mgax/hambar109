@@ -1,3 +1,4 @@
+redis: $REDIS_PATH/redis-server --daemonize no --port $PUBDOCS_REDIS_PORT --bind 127.0.0.1 --dir $REDIS_VAR --loglevel notice
 web: $PUBDOCS_VENV/bin/python manage.py runfcgi -p $PUBDOCS_FCGI_PORT
 worker: $PUBDOCS_VENV/bin/celery worker --app=harvest.celery
 indexer: $PUBDOCS_VENV/bin/celery worker --app=search.celery
