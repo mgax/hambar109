@@ -38,6 +38,87 @@ def es_search(text, fields=None, page=1, per_page=20):
 
 search_pages = flask.Blueprint('search', __name__, template_folder='templates')
 
+def appcontext(func):
+    def wrapper(*args, **kwargs):
+        import manage
+        app = manage.create_app()
+        with app.app_context():
+            return func(*args, **kwargs)
+    return wrapper
+
+@celery.task
+@appcontext
+def index(file_path):
+    """ Index a file from the repositoy. """
+    from harvest import build_fs_path
+    es_url = flask.current_app.config['PUBDOCS_ES_URL']
+    repo = flask.current_app.config['PUBDOCS_FILE_REPO'] / ''
+
+    (section, year, name) = file_path.replace(repo, "").split('/')
+    fs_path = build_fs_path(file_path)
+    with NamedTempFile(mode='w+b', delete=True) as temp:
+        try:
+            subprocess.check_call('pdftotext %s %s' %(fs_path, temp.name),
+                                  shell=True)
+        except Exception as exp:
+            print exp
+
+        clean(temp.name, False)
+        index_data = {
+            'file': b64encode(temp.read()),
+            'path': file_path,
+            'year': int(year),
+            'section': int(section[3:]),
+        }
+        index_resp = requests.post(es_url + '/mof/attachment/' + name,
+                                   data=flask.json.dumps(index_data))
+        assert index_resp.status_code in [200, 201], repr(index_resp)
+        if index_resp.status_code == 200:
+            print 'Skipping indexing of %s. Already indexed!' %file_path
+
+
+def clean(file_path, debug):
+    """ Index a file from the repositoy. """
+    if not debug == 'debug':
+        debug = False
+    fs_path = path(file_path)
+    cursor = 0
+    total = fs_path.getsize()
+    if debug:
+        def custom_handler(err):
+            raise Exception(err.object)
+
+        import codecs
+        codecs.register_error('custom_handler', custom_handler)
+
+    with fs_path.open('r') as data:
+        with NamedTempFile(mode='a', delete=False) as cleaned:
+            chunk = data.read(100)
+            while chunk:
+                while (chunk[-1] not in ['\n'] and
+                      (cursor < total)):
+                    chunk += data.read(1)
+                    cursor += 1
+                try:
+                    chunk.decode('ascii', 'custom_handler')
+                except Exception as exp:
+                    #getting here means it needs correction
+                    for bad, good in utils.chars_mapping.iteritems():
+                        chunk = chunk.replace(bad, good)
+                    try:
+                        chunk.decode('ascii', 'custom_handler')
+                    except Exception as exp:
+                        #getting hear means no correction found
+                        if debug:
+                            import pdb; pdb.set_trace()
+                cleaned.write(chunk)
+                chunk = data.read(100)
+                cursor += len(chunk)
+            cleaned.flush()
+    with open(cleaned.name, 'rb') as f:
+        with fs_path.open('wb') as origin:
+            origin.write(f.read())
+
 
 @search_pages.route('/')
 def search():
@@ -97,99 +178,26 @@ def register_commands(manager):
                                    data=flask.json.dumps(attachment_config))
         assert attach_resp.status_code == 200, repr(attach_resp)
 
-    @celery.task
-    @manager.command
-    def index(file_path):
-        """ Index a file from the repositoy. """
-        from harvest import build_fs_path
-        es_url = flask.current_app.config['PUBDOCS_ES_URL']
-        repo = flask.current_app.config['PUBDOCS_FILE_REPO'] / ''
-
-        (section, year, name) = file_path.replace(repo, "").split('/')
-        fs_path = build_fs_path(file_path)
-        with NamedTempFile(mode='w+b', delete=True) as temp:
-            try:
-                subprocess.check_call('pdftotext %s %s' %(fs_path, temp.name),
-                                      shell=True)
-            except Exception as exp:
-                print exp
-
-            clean(temp.name, False)
-            index_data = {
-                'file': b64encode(temp.read()),
-                'path': file_path,
-                'year': int(year),
-                'section': int(section[3:]),
-            }
-            index_resp = requests.post(es_url + '/mof/attachment/' + name,
-                                       data=flask.json.dumps(index_data))
-            assert index_resp.status_code in [200, 201], repr(index_resp)
-            if index_resp.status_code == 200:
-                print 'Skipping indexing of %s. Already indexed!' %file_path
-
-    def clean(file_path, debug):
-        """ Index a file from the repositoy. """
-        if not debug == 'debug':
-            debug = False
-        fs_path = path(file_path)
-        cursor = 0
-        total = fs_path.getsize()
-        if debug:
-            def custom_handler(err):
-                raise Exception(err.object)
-
-            import codecs
-            codecs.register_error('custom_handler', custom_handler)
-
-        with fs_path.open('r') as data:
-            with NamedTempFile(mode='a', delete=False) as cleaned:
-                chunk = data.read(100)
-                while chunk:
-                    while (chunk[-1] not in ['\n'] and
-                          (cursor < total)):
-                        chunk += data.read(1)
-                        cursor += 1
-                    try:
-                        chunk.decode('ascii', 'custom_handler')
-                    except Exception as exp:
-                        #getting here means it needs correction
-                        for bad, good in utils.chars_mapping.iteritems():
-                            chunk = chunk.replace(bad, good)
-                        try:
-                            chunk.decode('ascii', 'custom_handler')
-                        except Exception as exp:
-                            #getting hear means no correction found
-                            if debug:
-                                import pdb; pdb.set_trace()
-                    cleaned.write(chunk)
-                    chunk = data.read(100)
-                    cursor += len(chunk)
-                cleaned.flush()
-        with open(cleaned.name, 'rb') as f:
-            with fs_path.open('wb') as origin:
-                origin.write(f.read())
-
     @manager.command
     def search(text):
         """ Search the index. """
         print flask.json.dumps(es_search(text), indent=2)
 
     @manager.command
-    def index_section(section, ext, debug):
-        """ Bulk index files from specified section and and with corres. extension. """
+    def index_section(section, debug):
+        """ Bulk index pdfs from specified section. """
         import os
         import subprocess
 
         section_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / section
-        args = 'find %s -name "*%s" | wc -l' % (str(section_path), ext)
+        args = 'find %s -name "*.pdf" | wc -l' % (str(section_path))
         total = int(subprocess.check_output(args, shell=True))
         indexed = 0
         for year in os.listdir(section_path):
             year_path = section_path / year
             for doc_path in year_path.files():
-                if doc_path.ext == ext:
-                    name = doc_path.name
-                    index.delay(doc_path)
-                    indexed += 1
-                    sys.stdout.write("\r%i/%i" % (indexed, total))
-                    sys.stdout.flush()
+                name = doc_path.name
+                index.delay(doc_path)
+                indexed += 1
+                sys.stdout.write("\r%i/%i" % (indexed, total))
+                sys.stdout.flush()
