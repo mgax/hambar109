@@ -86,7 +86,7 @@ def index(file_path):
                                    data=flask.json.dumps(index_data))
         assert index_resp.status_code in [200, 201], repr(index_resp)
         if index_resp.status_code == 200:
-            log.info('Skipping. Already indexed!' %file_path)
+            log.info('Skipping. Already indexed!')
 
 
 def clean(file_path, debug):
