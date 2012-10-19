@@ -54,3 +54,6 @@ if __name__ == '__main__':
     from utils import set_up_logging
     set_up_logging()
     manager.run()
+
+else:
+    app = create_app()
