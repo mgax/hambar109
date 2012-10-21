@@ -2,6 +2,7 @@
 from base64 import b64encode
 import flask
 import requests
+import os
 import sys
 import subprocess
 import logging
@@ -10,13 +11,11 @@ from celery import Celery
 from celery.signals import setup_logging
 from tempfile import NamedTemporaryFile as NamedTempFile
 from tempfile import TemporaryFile
-#from harvest import appcontext
+from harvest import appcontext, celery
 
 import utils
+from html2text import html2text
 
-
-celery = Celery()
-celery.config_from_object('celeryconfig')
 
 @setup_logging.connect
 def configure_worker(sender=None, **extra):
@@ -59,7 +58,7 @@ def appcontext(func):
 
 @celery.task
 @appcontext
-def index(file_path):
+def index(file_path, debug=False):
     """ Index a file from the repositoy. """
     from harvest import build_fs_path
     es_url = flask.current_app.config['PUBDOCS_ES_URL']
@@ -69,67 +68,103 @@ def index(file_path):
     fs_path = build_fs_path(file_path)
     with NamedTempFile(mode='w+b', delete=True) as temp:
         try:
-            subprocess.check_call('pdftotext %s %s' %(fs_path, temp.name),
-                                  shell=True)
+            #subprocess.check_call('pdftotext %s %s' %(fs_path, temp.name),
+            #                      shell=True)
+
+            #command = ('pdf2htmlEX --process-nontext 0 --dest-dir '
+            #           '/tmp %s %s' %(fs_path, temp.name.split('/')[-1]))
+
+            # command = ('pdf2txt.py -o %s %s' %(temp.name, fs_path))
+            # command = ('pdftohtml -s -i -c -q -nomerge -stdout '
+            #           '%s %s' %(fs_path, temp.name))
+            command = "java -jar lib/tika-app-1.2.jar -t %s > %s" %(fs_path,
+                    temp.name)
+
+            subprocess.check_call(command, shell=True)
+
         except Exception as exp:
             log.critical(exp)
-
-        clean(temp.name, False)
+        from time import time
+        start = time()
+        clean(temp.name, debug)
+        duration = time() - start
+        with open(temp.name) as tmp:
+            text = tmp.read()
         index_data = {
-            'file': b64encode(temp.read()),
+            'file': b64encode(text),
             'path': file_path,
             'year': int(year),
             'section': int(section[3:]),
         }
-        log.info('Indexing %s' %file_path)
         index_resp = requests.post(es_url + '/mof/attachment/' + name,
                                    data=flask.json.dumps(index_data))
         assert index_resp.status_code in [200, 201], repr(index_resp)
         if index_resp.status_code == 200:
             log.info('Skipping. Already indexed!')
+        else:
+            log.info('%s[indexed in %f]' %(fs_path.name, duration))
 
 
+def chars_debug(match, text, debug=False):
+    class bcolors:
+        HEADER = '\033[95m'
+        OKBLUE = '\033[94m'
+        OKGREEN = '\033[92m'
+        WARNING = '\033[93m'
+        FAIL = '\033[91m'
+        ENDC = '\033[0m'
+    try:
+        bad = match.group(0)
+        good = utils.chars_mapping[bad]
+    except KeyError as exp:
+        good = utils.chars_mapping.get(bad, '???')
+    finally:
+        old = (text[match.start()-20:match.start()] +
+               bcolors.FAIL +
+               bad +
+               bcolors.ENDC +
+               text[match.end():match.end()+20]
+              )
+        new = (text[match.start()-20:match.start()] +
+               bcolors.OKGREEN +
+               good +
+               bcolors.ENDC +
+               text[match.end():match.end()+20]
+              )
+        message = '%s\n%s\n' %(old, new)
+        print ('------------'+ bcolors.FAIL +
+               repr(bad) +
+               bcolors.ENDC + '------------\n')
+        print message
+        if debug:
+            import pdb; pdb.set_trace()
+
+
+import re
+pat3 = re.compile(r'([^\x00-\x7F][^\x00-\x7F][^\x00-\x7F])')
+pat2 = re.compile(r'([^\x00-\x7F][^\x00-\x7F])')
 def clean(file_path, debug):
     """ Index a file from the repositoy. """
     if not debug == 'debug':
         debug = False
-    fs_path = path(file_path)
-    cursor = 0
-    total = fs_path.getsize()
-    if debug:
-        def custom_handler(err):
-            raise Exception(err.object)
-
-        import codecs
-        codecs.register_error('custom_handler', custom_handler)
-
-    with fs_path.open('r') as data:
+    with open(file_path, 'r') as data:
         with NamedTempFile(mode='a', delete=False) as cleaned:
-            chunk = data.read(100)
-            while chunk:
-                while (chunk[-1] not in ['\n'] and
-                      (cursor < total)):
-                    chunk += data.read(1)
-                    cursor += 1
-                try:
-                    chunk.decode('ascii', 'custom_handler')
-                except Exception as exp:
-                    #getting here means it needs correction
-                    for bad, good in utils.chars_mapping.iteritems():
-                        chunk = chunk.replace(bad, good)
-                    try:
-                        chunk.decode('ascii', 'custom_handler')
-                    except Exception as exp:
-                        #getting hear means no correction found
-                        if debug:
-                            import pdb; pdb.set_trace()
-                cleaned.write(chunk)
-                chunk = data.read(100)
-                cursor += len(chunk)
-            cleaned.flush()
+            text = data.read()
+            #text = text.decode('ISO-8859-1')
+            #text = html2text(text)
+            #text = text.encode('ISO-8859-1')
+            for bad, good in utils.chars_mapping.iteritems():
+                text = text.replace(bad, good)
+            if debug:
+                for match in pat3.finditer(text):
+                    chars_debug(match, text, True)
+                for match in pat2.finditer(text):
+                    chars_debug(match, text, True)
+
     with open(cleaned.name, 'rb') as f:
-        with fs_path.open('wb') as origin:
-            origin.write(f.read())
+        with open(file_path, 'wb') as origin:
+            text = text.decode('ISO-8859-1')
+            origin.write(text.encode('UTF8'))
 
 
 @search_pages.route('/')
@@ -194,6 +229,10 @@ def register_commands(manager):
     def search(text):
         """ Search the index. """
         print flask.json.dumps(es_search(text), indent=2)
+
+    @manager.command
+    def index_file(file_path, debug):
+        index(file_path, debug)
 
     @manager.command
     def index_section(section, debug):
