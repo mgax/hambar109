@@ -7,7 +7,6 @@ import sys
 import subprocess
 import logging
 from path import path
-from celery import Celery
 from celery.signals import setup_logging
 from tempfile import NamedTemporaryFile as NamedTempFile
 from tempfile import TemporaryFile
@@ -68,18 +67,9 @@ def index(file_path, debug=False):
     fs_path = build_fs_path(file_path)
     with NamedTempFile(mode='w+b', delete=True) as temp:
         try:
-            #subprocess.check_call('pdftotext %s %s' %(fs_path, temp.name),
-            #                      shell=True)
-
-            #command = ('pdf2htmlEX --process-nontext 0 --dest-dir '
-            #           '/tmp %s %s' %(fs_path, temp.name.split('/')[-1]))
-
-            # command = ('pdf2txt.py -o %s %s' %(temp.name, fs_path))
-            # command = ('pdftohtml -s -i -c -q -nomerge -stdout '
-            #           '%s %s' %(fs_path, temp.name))
-            command = "java -jar lib/tika-app-1.2.jar -t %s > %s" %(fs_path,
-                    temp.name)
-
+            #command = "java -jar lib/tika-app-1.2.jar -t %s > %s" %(fs_path,
+            #        temp.name)
+            command = 'nc localhost 9998 < %s > %s' %(fs_path, temp.name)
             subprocess.check_call(command, shell=True)
 
         except Exception as exp:
@@ -150,9 +140,6 @@ def clean(file_path, debug):
     with open(file_path, 'r') as data:
         with NamedTempFile(mode='a', delete=False) as cleaned:
             text = data.read()
-            #text = text.decode('ISO-8859-1')
-            #text = html2text(text)
-            #text = text.encode('ISO-8859-1')
             for bad, good in utils.chars_mapping.iteritems():
                 text = text.replace(bad, good)
             if debug:
