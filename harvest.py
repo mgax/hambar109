@@ -3,6 +3,7 @@ import sys
 import re
 import logging
 import tempfile
+from functools import wraps
 from path import path
 import requests
 from celery import Celery
@@ -97,6 +98,7 @@ def register_commands(manager):
 
 
 def appcontext(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         import manage
         app = manage.create_app()

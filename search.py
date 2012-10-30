@@ -47,13 +47,6 @@ def es_search(text, fields=None, page=1, per_page=20):
 
 search_pages = flask.Blueprint('search', __name__, template_folder='templates')
 
-def appcontext(func):
-    def wrapper(*args, **kwargs):
-        import manage
-        app = manage.create_app()
-        with app.app_context():
-            return func(*args, **kwargs)
-    return wrapper
 
 @celery.task
 @appcontext
