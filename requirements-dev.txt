@@ -1,2 +1,2 @@
 -r requirements.txt
-honcho==0.1.0
+https://github.com/nickstenning/honcho/zipball/master
