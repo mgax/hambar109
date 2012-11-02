@@ -5,7 +5,8 @@ PubDocs
 Development
 -----------
 To work on the PubDocs code, you need a local repository checkout, and
-some dependencies. Here's a quick howto::
+make sure you have Java 6 and redis (2.6 or newer) on your ``$PATH``.
+Here's a quick howto::
 
 1. Clone the code::
 
