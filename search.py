@@ -130,8 +130,6 @@ pat3 = re.compile(r'([^\x00-\x7F][^\x00-\x7F][^\x00-\x7F])')
 pat2 = re.compile(r'([^\x00-\x7F][^\x00-\x7F])')
 def clean(file_path, debug):
     """ Index a file from the repositoy. """
-    if not debug == 'debug':
-        debug = False
     with open(file_path, 'r') as data:
         with NamedTempFile(mode='a', delete=False) as cleaned:
             text = data.read()
@@ -216,7 +214,8 @@ def register_commands(manager):
     def index_file(file_path, debug):
         index(file_path, debug)
 
-    @manager.command
+    @manager.option('-d', '--debug', dest='debug', default=False)
+    @manager.option('-s', '--section', dest='section', default=None)
     def index_section(section, debug):
         """ Bulk index pdfs from specified section. """
         import os
@@ -230,7 +229,10 @@ def register_commands(manager):
             year_path = section_path / year
             for doc_path in year_path.files():
                 name = doc_path.name
-                index.delay(doc_path)
+                if debug:
+                    index(doc_path, debug)
+                else:
+                    index.delay(doc_path)
                 indexed += 1
                 sys.stdout.write("\r%i/%i" % (indexed, total))
                 sys.stdout.flush()
