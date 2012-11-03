@@ -48,6 +48,7 @@ begins with ``sandbox/bin``::
 
     $ source sandbox/bin/activate
 
-6. Run the services locally::
+6. Run the services locally, and access the webapp at
+``http://localhost:5000``::
 
     $ honcho start
