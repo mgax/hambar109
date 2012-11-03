@@ -214,8 +214,8 @@ def register_commands(manager):
     def index_file(file_path, debug):
         index(file_path, debug)
 
-    @manager.option('-d', '--debug', dest='debug', default=False)
-    @manager.option('-s', '--section', dest='section', default=None)
+    @manager.option('-d', '--debug', action='store_true')
+    @manager.option('-s', '--section', default=None)
     def index_section(section, debug):
         """ Bulk index pdfs from specified section. """
         import os
