@@ -232,3 +232,5 @@ def register_commands(manager):
                 indexed += 1
                 sys.stdout.write("\r%i/%i" % (indexed, total))
                 sys.stdout.flush()
+
+        print ' done'
