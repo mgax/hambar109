@@ -6,6 +6,7 @@ import os
 import sys
 import subprocess
 import logging
+import socket
 from path import path
 from celery.signals import setup_logging
 from tempfile import NamedTemporaryFile as NamedTempFile
@@ -48,6 +49,23 @@ def es_search(text, fields=None, page=1, per_page=20):
 search_pages = flask.Blueprint('search', __name__, template_folder='templates')
 
 
+def invoke_tika(data_file, host='127.0.0.1', port=9999, buffer_size=16384):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((host, port))
+    while True:
+        chunk = data_file.read(buffer_size)
+        if not chunk:
+            break
+        sock.send(chunk)
+    sock.shutdown(socket.SHUT_WR)
+    while True:
+        chunk = sock.recv(buffer_size)
+        if not chunk:
+            break
+        yield chunk
+    sock.close()
+
+
 @celery.task
 @appcontext
 def index(file_path, debug=False):
@@ -61,11 +79,10 @@ def index(file_path, debug=False):
     fs_path = build_fs_path(file_path)
     with NamedTempFile(mode='w+b', delete=True) as temp:
         try:
-            #command = "java -jar lib/tika-app-1.2.jar -t %s > %s" %(fs_path,
-            #        temp.name)
-            command = ('nc localhost %s < %s > %s' %
-                       (tika_port, fs_path, temp.name))
-            subprocess.check_call(command, shell=True)
+            with open(fs_path, 'rb') as pdf_file:
+                for chunk in invoke_tika(pdf_file, port=tika_port):
+                    temp.write(chunk)
+                temp.seek(0)
 
         except Exception as exp:
             log.critical(exp)
