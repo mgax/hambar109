@@ -1,10 +1,15 @@
 # encoding: utf-8
 import unittest
 import re
+from datetime import date
 from path import path
 
 
 DATA = path(__file__).abspath().parent / 'data'
+
+MONTH = {
+    'martie': 3,
+}
 
 
 tags = re.compile(r'\<[^>]+\>')
@@ -32,6 +37,9 @@ def parse(text):
                 state = 'expect_content'
                 break
 
+    date_text = section['identifier'].rsplit(',', 1)[-1]
+    day, month_name, year = date_text.split()
+    section['date'] = date(int(year), MONTH[month_name], int(day))
     return [section]
 
 
@@ -49,4 +57,5 @@ class MofParserTest(unittest.TestCase):
             'heading': "PARTEA I",
             'title': "LEGI, DECRETE, HOTĂRÂRI ȘI ALTE ACTE",
             'identifier': "Anul 177 (XXI) — Nr. 174 Joi, 19 martie 2009",
+            'date': date(2009, 3, 19),
         }, out[0])
