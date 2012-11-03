@@ -73,7 +73,7 @@ def index(file_path, debug=False):
     from harvest import build_fs_path
     es_url = flask.current_app.config['PUBDOCS_ES_URL']
     repo = flask.current_app.config['PUBDOCS_FILE_REPO'] / ''
-    tika_port = flask.current_app.config['PUBDOCS_TIKA_PORT']
+    tika_port = int(flask.current_app.config['PUBDOCS_TIKA_PORT'])
 
     (section, year, name) = file_path.replace(repo, "").split('/')
     fs_path = build_fs_path(file_path)
