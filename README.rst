@@ -23,6 +23,7 @@ Here's a quick howto:
    Tika`_::
 
     $ cd sandbox
+    $ mkdir var/redis
     $ curl -L 'https://github.com/downloads/elasticsearch/elasticsearch/elasticsearch-0.19.9.tar.gz' | tar xzf -
     $ elasticsearch-0.19.9/bin/plugin -install 'elasticsearch/elasticsearch-mapper-attachments/1.6.0'
     $ curl -O 'http://www.eu.apache.org/dist/tika/tika-app-1.2.jar'
@@ -39,6 +40,7 @@ contents::
     PUBDOCS_ES_URL=http://localhost:5300
     PUBDOCS_ES_BIN=sandbox/elasticsearch-0.19.9/bin
     PUBDOCS_TIKA_JAR=sandbox/tika-app-1.2.jar
+    PUBDOCS_TIKA_PORT=5300
 
 5. Activate the virtualenv. This needs to be done in each shell session
 before you run the app. It just configures your ``$PATH`` so that it
