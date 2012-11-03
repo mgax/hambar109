@@ -55,6 +55,7 @@ def index(file_path, debug=False):
     from harvest import build_fs_path
     es_url = flask.current_app.config['PUBDOCS_ES_URL']
     repo = flask.current_app.config['PUBDOCS_FILE_REPO'] / ''
+    tika_port = flask.current_app.config['PUBDOCS_TIKA_PORT']
 
     (section, year, name) = file_path.replace(repo, "").split('/')
     fs_path = build_fs_path(file_path)
@@ -62,7 +63,8 @@ def index(file_path, debug=False):
         try:
             #command = "java -jar lib/tika-app-1.2.jar -t %s > %s" %(fs_path,
             #        temp.name)
-            command = 'nc localhost 9998 < %s > %s' %(fs_path, temp.name)
+            command = ('nc localhost %s < %s > %s' %
+                       (tika_port, fs_path, temp.name))
             subprocess.check_call(command, shell=True)
 
         except Exception as exp:
