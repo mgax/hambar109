@@ -21,7 +21,13 @@ def create_app():
         app.config['PUBDOCS_ES_URL'] = os.environ['PUBDOCS_ES_URL']
     if 'PUBDOCS_TIKA_PORT' in os.environ:
         app.config['PUBDOCS_TIKA_PORT'] = os.environ['PUBDOCS_TIKA_PORT']
+    if os.environ.get('DEBUG'):
+        app.debug = True
     app.register_blueprint(search.search_pages)
+
+    @app.route('/crashme')
+    def crashme():
+        raise RuntimeError("Crashing, as requested.")
 
     return app
 
