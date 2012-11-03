@@ -1,6 +1,7 @@
 # encoding: utf-8
 import re
 from datetime import date
+import lxml.html, lxml.cssselect
 
 
 MONTH = {
@@ -8,17 +9,37 @@ MONTH = {
 }
 
 
+class HtmlElementList(list):
+
+    def text(self):
+        return ' '.join(e.text_content() for e in self)
+
+
+class HtmlPage(object):
+
+    def __init__(self, html):
+        self._doc = lxml.html.fromstring(html)
+
+    def select(self, css_selector):
+        sel = lxml.cssselect.CSSSelector(css_selector)
+        return HtmlElementList(sel(self._doc))
+
+
 class MofParser(object):
 
     _tags = re.compile(r'\<[^>]+\>')
 
     def __init__(self, html):
-        self.text = html.splitlines()
+        self.page = HtmlPage(html)
+
+    def _iter_lines(self):
+        for p in self.page.select('p'):
+            yield p.text_content().strip().encode('utf-8')
 
     def parse(self):
         section = {}
         state = 'expect_heading'
-        for line in self.text:
+        for line in self._iter_lines():
             line = self._tags.sub('', line).strip()
 
             if state == 'expect_heading':
