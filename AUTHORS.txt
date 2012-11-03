@@ -1,0 +1,4 @@
+# contributors listed in reverse alphabetical order :)
+Mihai Dincă
+Andrei Cristian Petcu
+Alex Morega
