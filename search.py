@@ -55,6 +55,7 @@ def index(file_path, debug=False):
     from harvest import build_fs_path
     es_url = flask.current_app.config['PUBDOCS_ES_URL']
     repo = flask.current_app.config['PUBDOCS_FILE_REPO'] / ''
+    tika_port = flask.current_app.config['PUBDOCS_TIKA_PORT']
 
     (section, year, name) = file_path.replace(repo, "").split('/')
     fs_path = build_fs_path(file_path)
@@ -62,7 +63,8 @@ def index(file_path, debug=False):
         try:
             #command = "java -jar lib/tika-app-1.2.jar -t %s > %s" %(fs_path,
             #        temp.name)
-            command = 'nc localhost 9998 < %s > %s' %(fs_path, temp.name)
+            command = ('nc localhost %s < %s > %s' %
+                       (tika_port, fs_path, temp.name))
             subprocess.check_call(command, shell=True)
 
         except Exception as exp:
@@ -128,8 +130,6 @@ pat3 = re.compile(r'([^\x00-\x7F][^\x00-\x7F][^\x00-\x7F])')
 pat2 = re.compile(r'([^\x00-\x7F][^\x00-\x7F])')
 def clean(file_path, debug):
     """ Index a file from the repositoy. """
-    if not debug == 'debug':
-        debug = False
     with open(file_path, 'r') as data:
         with NamedTempFile(mode='a', delete=False) as cleaned:
             text = data.read()
@@ -214,7 +214,8 @@ def register_commands(manager):
     def index_file(file_path, debug):
         index(file_path, debug)
 
-    @manager.command
+    @manager.option('-d', '--debug', dest='debug', default=False)
+    @manager.option('-s', '--section', dest='section', default=None)
     def index_section(section, debug):
         """ Bulk index pdfs from specified section. """
         import os
@@ -228,7 +229,12 @@ def register_commands(manager):
             year_path = section_path / year
             for doc_path in year_path.files():
                 name = doc_path.name
-                index.delay(doc_path)
+                if debug:
+                    index(doc_path, debug)
+                else:
+                    index.delay(doc_path)
                 indexed += 1
                 sys.stdout.write("\r%i/%i" % (indexed, total))
                 sys.stdout.flush()
+
+        print ' done'

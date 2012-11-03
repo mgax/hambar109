@@ -19,19 +19,9 @@ def create_app():
                                            or app.instance_path)
     if 'PUBDOCS_ES_URL' in os.environ:
         app.config['PUBDOCS_ES_URL'] = os.environ['PUBDOCS_ES_URL']
+    if 'PUBDOCS_TIKA_PORT' in os.environ:
+        app.config['PUBDOCS_TIKA_PORT'] = os.environ['PUBDOCS_TIKA_PORT']
     app.register_blueprint(search.search_pages)
-
-    @app.route('/static/lib/<path:resource_url>', methods=['GET', 'HEAD'])
-    def lib_resource(resource_url):
-        if not app.debug:
-            flask.abort(404)
-        lib_url = app.config['STATIC_LIB_URL'] + '/' + resource_url
-        resp = requests.request(flask.request.method, lib_url)
-        if resp.status_code != 200:
-            flask.abort(resp.status_code)
-        headers = {h: v for h, v in resp.headers.items()
-                   if h in ['content-type', 'cache-control']}
-        return flask.Response(resp.content, headers=headers)
 
     return app
 
