@@ -66,7 +66,9 @@ class MofParser(object):
         meta['date'] = date(int(year), MONTH[month_name], int(day))
         meta['mof_number'] = int(pre_text.split()[-2])
 
-        return [meta]
+        return {
+            'meta': meta,
+        }
 
 
 def parse(text):

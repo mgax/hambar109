@@ -24,4 +24,4 @@ class MofParserTest(unittest.TestCase):
             'identifier': "Anul 177 (XXI) — Nr. 174 Joi, 19 martie 2009",
             'date': date(2009, 3, 19),
             'mof_number': 174,
-        }, out[0])
+        }, out['meta'])
