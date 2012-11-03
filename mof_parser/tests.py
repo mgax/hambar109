@@ -37,9 +37,12 @@ def parse(text):
                 state = 'expect_content'
                 break
 
-    date_text = section['identifier'].rsplit(',', 1)[-1]
+    # "Anul 177 (XXI) — Nr. 174 Joi, 19 martie 2009"
+    pre_text, date_text = section['identifier'].rsplit(',', 1)
     day, month_name, year = date_text.split()
     section['date'] = date(int(year), MONTH[month_name], int(day))
+    section['mof_number'] = int(pre_text.split()[-2])
+
     return [section]
 
 
@@ -58,4 +61,5 @@ class MofParserTest(unittest.TestCase):
             'title': "LEGI, DECRETE, HOTĂRÂRI ȘI ALTE ACTE",
             'identifier': "Anul 177 (XXI) — Nr. 174 Joi, 19 martie 2009",
             'date': date(2009, 3, 19),
+            'mof_number': 174,
         }, out[0])
