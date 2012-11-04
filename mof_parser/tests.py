@@ -24,3 +24,14 @@ class MofParserTest(unittest.TestCase):
             'date': date(2009, 3, 19),
             'mof_number': 174,
         }, out['meta'])
+
+    def test_parser_extracts_main_sections(self):
+        out = parse(self.html)
+        self.assertEqual(len(out['sections']), 4)
+        self.assertEqual([s['title'] for s in out['sections']], [
+            u"DECIZII ALE CURTII CONSTITUTIONALE",
+            u"ORDONANTE SI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI",
+            (u"ACTE ALE ORGANELOR DE SPECIALITATE ALE "
+                 u"ADMINISTRATIEI PUBLICE CENTRALE"),
+            u"ACTE ALE BĂNCII NATIONALE A ROMÂNIEI",
+        ])
