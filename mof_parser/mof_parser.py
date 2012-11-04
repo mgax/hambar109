@@ -41,27 +41,24 @@ class MofParser(object):
     def __init__(self, html):
         self.page = HtmlPage(html)
 
-    def _iter_lines(self):
-        for p in self.page.select('p'):
-            yield p.text_content().strip()
-
     def parse(self):
         meta = {}
+        sections = []
         state = 'expect_heading'
-        for line in self._iter_lines():
-            line = self._tags.sub('', line).strip()
+        for el in self.page.select('body > div > *'):
+            text = el.text_content().strip()
 
             if state == 'expect_heading':
-                if 'P A R T E A' in line:
+                if 'P A R T E A' in text:
                     meta['heading'] = 'PARTEA I'
                     state = 'expect_identifier'
                 continue
 
             if state == 'expect_identifier':
-                if line.startswith("Anul "):
-                    meta['identifier'] = line
-                    state = 'expect_content'
-                    break
+                if text.startswith("Anul "):
+                    meta['identifier'] = text
+                    state = 'expect_summary'
+                continue
 
         # "Anul 177 (XXI) — Nr. 174 Joi, 19 martie 2009"
         #pre_text, date_text = meta['title'].rsplit(',', 1)
