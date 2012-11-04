@@ -104,9 +104,6 @@ class MofParser(object):
 
                 continue
 
-        # "Anul 177 (XXI) — Nr. 174 Joi, 19 martie 2009"
-        #pre_text, date_text = meta['title'].rsplit(',', 1)
-        #day, month_name, year = date_text.split()
         match = self._headline.match(replace_nbsp(meta['identifier']))
         bits = match.groupdict()
         meta['title'] = cleanspace(bits['title'])
