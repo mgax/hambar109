@@ -56,9 +56,18 @@ class MofParser(object):
                            r'(?P<weekday>\w+), '
                            r'(?P<day>\d{1,2}) (?P<month>\w+) (?P<year>\d{4})$',
                            re.DOTALL)
+    _article_title = re.compile(ur'^(?P<number>\d+)\.\s+-\s+'
+                                ur'(?P<type>Ordonantă de urgentă)\s+'
+                                ur'(?P<summary>privind .*)$')
 
     def __init__(self, html):
         self.page = HtmlPage(html)
+
+    def parse_article_title(self, title):
+        m = self._article_title.match(title)
+        if m is not None:
+            return m.groupdict()
+        return {}
 
     def parse(self):
         meta = {}
@@ -98,9 +107,9 @@ class MofParser(object):
                     sections_by_authority[section['title']] = section
 
                 elif wordtext and wordtext != 'SUMAR':
-                    section['articles'].append({
-                        'title': wordtext,
-                    })
+                    article = {'title': wordtext}
+                    article.update(self.parse_article_title(wordtext))
+                    section['articles'].append(article)
 
                 continue
 

@@ -49,3 +49,13 @@ class MofParserTest(unittest.TestCase):
             u"297. - Hotărâre privind dispunerea reluării activitătii de căt",
             u"304. - Hotărâre privind exercitarea, cu caracter temporar, a f",
         ])
+
+    def test_parser_extracts_oug_article_metadata(self):
+        out = parse(self.html)
+        oug_22 = out['sections'][1]['articles'][0]
+        self.assertDictContainsSubset({
+            'number': '22',
+            'type': u"Ordonantă de urgentă",
+            'summary': (u"privind înfiintarea Autoritătii Nationale pentru "
+                        u"Administrare si Reglementare în Comunicatii"),
+        }, oug_22)
