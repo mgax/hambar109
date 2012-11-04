@@ -11,17 +11,16 @@ DATA = path(__file__).abspath().parent / 'data'
 class MofParserTest(unittest.TestCase):
 
     def setUp(self):
-        self.text = (DATA / 'mof1_2009_0174.txt').text()
+        self.html = (DATA / 'mof1_2009_0174.html').text('windows-1252')
 
     def test_phrase_found_in_text(self):
-        self.assertIn("utilizeze eficient spectrul radio", self.text)
+        self.assertIn("utilizeze eficient spectrul radio", self.html)
 
-    def test_parser_returns_one_section(self):
-        out = parse(self.text)
+    def test_parser_returns_section_meta(self):
+        out = parse(self.html)
         self.assertDictContainsSubset({
             'heading': "PARTEA I",
-            'title': "LEGI, DECRETE, HOTĂRÂRI ȘI ALTE ACTE",
-            'identifier': "Anul 177 (XXI) — Nr. 174 Joi, 19 martie 2009",
+            'title': u"LEGI, DECRETE, HOTĂRÂRI SI ALTE ACTE",
             'date': date(2009, 3, 19),
             'mof_number': 174,
         }, out['meta'])

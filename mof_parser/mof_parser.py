@@ -25,16 +25,25 @@ class HtmlPage(object):
         return HtmlElementList(sel(self._doc))
 
 
+def replace_nbsp(text):
+    return text.replace(u'\xa0', ' ')
+
+
 class MofParser(object):
 
     _tags = re.compile(r'\<[^>]+\>')
+    _headline = re.compile(r'^Anul .* Nr\. (?P<mof_number>\d+)'
+                           r'\s+(?P<title>.+)\s+'
+                           r'(?P<weekday>\w+), '
+                           r'(?P<day>\d{1,2}) (?P<month>\w+) (?P<year>\d{4})$',
+                           re.DOTALL)
 
     def __init__(self, html):
         self.page = HtmlPage(html)
 
     def _iter_lines(self):
         for p in self.page.select('p'):
-            yield p.text_content().strip().encode('utf-8')
+            yield p.text_content().strip()
 
     def parse(self):
         meta = {}
@@ -45,31 +54,30 @@ class MofParser(object):
             if state == 'expect_heading':
                 if 'P A R T E A' in line:
                     meta['heading'] = 'PARTEA I'
-                    state = 'expect_title'
-                continue
-
-            if state == 'expect_title':
-                if line:
-                    meta['title'] = line
                     state = 'expect_identifier'
                 continue
 
             if state == 'expect_identifier':
-                if line:
+                if line.startswith("Anul "):
                     meta['identifier'] = line
                     state = 'expect_content'
                     break
 
         # "Anul 177 (XXI) — Nr. 174 Joi, 19 martie 2009"
-        pre_text, date_text = meta['identifier'].rsplit(',', 1)
-        day, month_name, year = date_text.split()
-        meta['date'] = date(int(year), MONTH[month_name], int(day))
-        meta['mof_number'] = int(pre_text.split()[-2])
+        #pre_text, date_text = meta['title'].rsplit(',', 1)
+        #day, month_name, year = date_text.split()
+        match = self._headline.match(replace_nbsp(meta['identifier']))
+        bits = match.groupdict()
+        meta['title'] = re.sub(r'\s+', bits['title'].replace('\n', ' '), ' ').strip()
+        meta['date'] = date(int(bits['year']),
+                            MONTH[bits['month']],
+                            int(bits['day']))
+        meta['mof_number'] = int(bits['mof_number'])
 
         return {
             'meta': meta,
         }
 
 
-def parse(text):
-    return MofParser(text).parse()
+def parse(html):
+    return MofParser(html).parse()
