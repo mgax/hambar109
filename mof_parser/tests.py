@@ -70,3 +70,11 @@ class MofParserTest(unittest.TestCase):
                         u"subprefect al judetului Alba de către domnul "
                         u"Popa Romul"),
         }, hg_290)
+
+    def test_parser_extracts_article_body(self):
+        out = parse(self.html)
+        body = out['sections'][1]['articles'][1]['body']
+        print body
+        self.assertTrue(body.startswith(
+            u"Având în vedere prevederile art. 19 alin. (1) lit. a) si art."))
+        self.assertIn(u"încetează exercitarea functiei publice", body)
