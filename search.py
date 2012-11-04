@@ -119,21 +119,13 @@ def chars_debug(match, text, debug=False):
         bad = match.group(0)
         good = utils.chars_mapping[bad]
     except KeyError as exp:
-        good = utils.chars_mapping.get(bad, '???')
-    finally:
-        old = (text[match.start()-20:match.start()] +
-               bcolors.FAIL +
-               bad +
-               bcolors.ENDC +
-               text[match.end():match.end()+20]
-              )
-        new = (text[match.start()-20:match.start()] +
-               bcolors.OKGREEN +
-               good +
-               bcolors.ENDC +
-               text[match.end():match.end()+20]
-              )
-        message = '%s\n%s\n' %(old, new)
+        context = (text[match.start()-20:match.start()] +
+                   bcolors.FAIL +
+                   bad +
+                   bcolors.ENDC +
+                   text[match.end():match.end()+20]
+                  )
+        message = '%s\n' %context
         print ('------------'+ bcolors.FAIL +
                repr(bad) +
                bcolors.ENDC + '------------\n')
@@ -143,20 +135,28 @@ def chars_debug(match, text, debug=False):
 
 
 import re
-pat3 = re.compile(r'([^\x00-\x7F][^\x00-\x7F][^\x00-\x7F])')
-pat2 = re.compile(r'([^\x00-\x7F][^\x00-\x7F])')
+pat = re.compile(r'([^\x00-\x7F]{2,6})')
 def clean(file_path, debug):
     """ Index a file from the repositoy. """
+    import itertools
     with open(file_path, 'r') as data:
         with NamedTempFile(mode='a', delete=False) as cleaned:
             text = data.read()
             for bad, good in utils.chars_mapping.iteritems():
                 text = text.replace(bad, good)
             if debug:
-                for match in pat3.finditer(text):
-                    chars_debug(match, text, True)
-                for match in pat2.finditer(text):
-                    chars_debug(match, text, True)
+                good_cases = []
+                perm = []
+                for k in [2, 3]:
+                    perm+=list(itertools.product(utils.good_chars, repeat=k))
+                for p in perm:
+                    good_cases.append(''.join(p))
+                for match in pat.finditer(text):
+                    for case in good_cases:
+                        if match.group(0) in case:
+                            break
+                    else:
+                        chars_debug(match, text, True)
 
     with open(cleaned.name, 'rb') as f:
         with open(file_path, 'wb') as origin:
@@ -227,9 +227,10 @@ def register_commands(manager):
         """ Search the index. """
         print flask.json.dumps(es_search(text), indent=2)
 
-    @manager.command
-    def index_file(file_path, debug):
-        index(file_path, debug)
+    @manager.option('-d', '--debug', action='store_true')
+    @manager.option('-p', '--path')
+    def index_file(path, debug):
+        index(path, debug)
 
     @manager.option('-d', '--debug', action='store_true')
     @manager.option('-s', '--section', default=None)
