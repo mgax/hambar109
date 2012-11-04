@@ -78,10 +78,6 @@ class MofParser(object):
         sections_by_authority = {}
         state = 'expect_heading'
 
-        authorities = [
-            u"GUVERNUL ROMÂNIEI",
-        ]
-
         for el in self.page.select('body > div > *'):
             text = el.text_content().strip()
             wordtext = cleanspace(text)
