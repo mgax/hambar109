@@ -62,7 +62,8 @@ class MofParser(object):
 
     def parse(self):
         meta = {}
-        section_names = []
+        sections = []
+        sections_by_authority = {}
         state = 'expect_heading'
 
         authorities = [
@@ -87,9 +88,14 @@ class MofParser(object):
 
             if state == 'summary':
                 if wordtext in HEADLINES:
-                    if wordtext in section_names:
+                    if wordtext in sections_by_authority:
                         break
-                    section_names.append(wordtext)
+                    section = {
+                        'title': wordtext,
+                        'articles': [],
+                    }
+                    sections.append(section)
+                    sections_by_authority[section['title']] = section
                 continue
 
         # "Anul 177 (XXI) — Nr. 174 Joi, 19 martie 2009"
@@ -105,7 +111,7 @@ class MofParser(object):
 
         return {
             'meta': meta,
-            'sections': [{'title': n} for n in section_names],
+            'sections': sections,
         }
 
 
