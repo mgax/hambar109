@@ -35,3 +35,17 @@ class MofParserTest(unittest.TestCase):
                  u"ADMINISTRATIEI PUBLICE CENTRALE"),
             u"ACTE ALE BĂNCII NATIONALE A ROMÂNIEI",
         ])
+
+    def test_parser_extracts_articles(self):
+        out = parse(self.html)
+        section_gov = out['sections'][1]
+        self.assertEqual([a['title'][:62] for a in section_gov['articles']], [
+            u"22. - Ordonantă de urgentă privind înfiintarea Autoritătii Nat",
+            u"290. - Hotărâre privind încetarea exercitării functiei publice",
+            u"291. - Hotărâre privind exercitarea, cu caracter temporar, a f",
+            u"294. - Hotărâre privind modificarea raportului de serviciu al ",
+            u"295. - Hotărâre privind exercitarea, cu caracter temporar, a f",
+            u"296. - Hotărâre privind încetarea exercitării de către domnul ",
+            u"297. - Hotărâre privind dispunerea reluării activitătii de căt",
+            u"304. - Hotărâre privind exercitarea, cu caracter temporar, a f",
+        ])

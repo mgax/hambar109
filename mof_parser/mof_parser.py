@@ -96,6 +96,12 @@ class MofParser(object):
                     }
                     sections.append(section)
                     sections_by_authority[section['title']] = section
+
+                elif wordtext and wordtext != 'SUMAR':
+                    section['articles'].append({
+                        'title': wordtext,
+                    })
+
                 continue
 
         # "Anul 177 (XXI) — Nr. 174 Joi, 19 martie 2009"
