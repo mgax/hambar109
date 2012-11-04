@@ -59,3 +59,14 @@ class MofParserTest(unittest.TestCase):
             'summary': (u"privind înfiintarea Autoritătii Nationale pentru "
                         u"Administrare si Reglementare în Comunicatii"),
         }, oug_22)
+
+    def test_parser_extracts_hg_article_metadata(self):
+        out = parse(self.html)
+        hg_290 = out['sections'][1]['articles'][1]
+        self.assertDictContainsSubset({
+            'number': '290',
+            'type': u"Hotărâre",
+            'summary': (u"privind încetarea exercitării functiei publice de "
+                        u"subprefect al judetului Alba de către domnul "
+                        u"Popa Romul"),
+        }, hg_290)

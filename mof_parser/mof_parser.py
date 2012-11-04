@@ -57,7 +57,10 @@ class MofParser(object):
                            r'(?P<day>\d{1,2}) (?P<month>\w+) (?P<year>\d{4})$',
                            re.DOTALL)
     _article_title = re.compile(ur'^(?P<number>\d+)\.\s+-\s+'
-                                ur'(?P<type>Ordonantă de urgentă)\s+'
+                                ur'(?P<type>'
+                                    ur'Ordonantă de urgentă|'
+                                    ur'Hotărâre'
+                                    ur')\s+'
                                 ur'(?P<summary>privind .*)$')
 
     def __init__(self, html):
