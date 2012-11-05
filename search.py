@@ -88,10 +88,8 @@ def index(file_path, debug=False):
             log.critical(exp)
         from time import time
         start = time()
-        clean(temp.name, debug)
+        text = clean(temp.name, debug)
         duration = time() - start
-        with open(temp.name) as tmp:
-            text = tmp.read()
         index_data = {
             'file': b64encode(text),
             'path': file_path,
@@ -140,28 +138,23 @@ def clean(file_path, debug):
     """ Index a file from the repositoy. """
     import itertools
     with open(file_path, 'r') as data:
-        with NamedTempFile(mode='a', delete=False) as cleaned:
-            text = data.read()
-            for bad, good in utils.chars_mapping.iteritems():
-                text = text.replace(bad, good)
-            if debug:
-                good_cases = []
-                perm = []
-                for k in [2, 3]:
-                    perm+=list(itertools.product(utils.good_chars, repeat=k))
-                for p in perm:
-                    good_cases.append(''.join(p))
-                for match in pat.finditer(text):
-                    for case in good_cases:
-                        if match.group(0) in case:
-                            break
-                    else:
-                        chars_debug(match, text, True)
-
-    with open(cleaned.name, 'rb') as f:
-        with open(file_path, 'wb') as origin:
-            text = text.decode('ISO-8859-1')
-            origin.write(text.encode('UTF8'))
+        text = data.read()
+        for bad, good in utils.chars_mapping.iteritems():
+            text = text.replace(bad, good)
+        if debug:
+            good_cases = []
+            perm = []
+            for k in [2, 3]:
+                perm+=list(itertools.product(utils.good_chars, repeat=k))
+            for p in perm:
+                good_cases.append(''.join(p))
+            for match in pat.finditer(text):
+                for case in good_cases:
+                    if match.group(0) in case:
+                        break
+                else:
+                    chars_debug(match, text, True)
+        return text
 
 
 @search_pages.route('/')
