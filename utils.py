@@ -10,7 +10,12 @@ def set_up_logging():
     logging.getLogger().addHandler(stderr)
     #logging.getLogger('werkzeug').setLevel(logging.INFO)
 
-good_chars = ['ă','â','î','ţ','ş','Ă','Â','Ţ','Ş','Î','”','„','—','«','»','≤','±','Σ','•']
+good_chars = [
+    'ă','â','î','ţ','ş',
+    'Ă','Â','Ţ','Ş','Î',
+    '”','„','—','«','»',
+    '≤','±','Σ','•', '§'
+]
 
 chars_mapping = {
     '\xc8\x98': 'Ş',

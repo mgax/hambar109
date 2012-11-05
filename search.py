@@ -2,6 +2,7 @@
 from base64 import b64encode
 import flask
 import requests
+import re
 import os
 import sys
 import subprocess
@@ -12,6 +13,7 @@ from celery.signals import setup_logging
 from tempfile import NamedTemporaryFile as NamedTempFile
 from tempfile import TemporaryFile
 from harvest import appcontext, celery
+from pyquery import PyQuery as pq
 
 import utils
 from html2text import html2text
@@ -249,3 +251,33 @@ def register_commands(manager):
                 sys.stdout.flush()
 
         print ' done'
+
+    no_pat = re.compile('(?<=^)\d+')
+    name_pat = re.compile('(?<=\xe2\x80\x94 Lege privind ).+(?= \.)')
+    interval_pat = re.compile('(\d+)\xe2\x80\x93(\d+)$')
+    @manager.command
+    def extract_laws_summary(file_path):
+        from harvest import build_fs_path
+        no = name = start_pg = end_pg = None
+        laws = []
+        fs_path = build_fs_path(file_path)
+        with NamedTempFile(mode='w+b', delete=False) as temp:
+            command = ('pdf2htmlEX --process-nontext 0 --dest-dir '
+                       '/tmp %s %s' %(fs_path, temp.name.split('/')[-1]))
+            subprocess.check_call(command, shell=True)
+        with open(temp.name, 'rb') as tmp:
+            html = pq(tmp.read())
+            for div in html('#p1 .b .h3'):
+                sum_entry = div.text_content()
+                if 'Lege privind' in sum_entry:
+                    if no_pat.search(sum_entry):
+                        import pdb; pdb.set_trace()
+                        no = no_pat.search(sum_entry).group(0)
+                    if name_pat.search(sum_entry):
+                        name = name_pat.search(sum_entry).group(0)
+                    if interval_pat.search(sum_entry):
+                        start_pg = interval_pat.search(sum_entry).group(1)
+                        end_pg = interval_pat.search(sum_entry).group(2)
+                    laws.append([no, name, start_pg, end_pg])
+        os.remove(temp.name)
+        return laws
