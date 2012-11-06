@@ -240,7 +240,8 @@ def register_commands(manager):
         indexed = 0
         for year in os.listdir(section_path):
             year_path = section_path / year
-            for doc_path in year_path.files():
+            doc_paths = [dp for dp in year_path.files() if dp.endswith('pdf')]
+            for doc_path in doc_paths:
                 name = doc_path.name
                 if debug:
                     index(doc_path, debug)
