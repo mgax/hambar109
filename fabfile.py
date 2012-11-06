@@ -16,6 +16,7 @@ ES_ATTACH_SPEC = 'elasticsearch/elasticsearch-mapper-attachments/1.6.0'
 PUBDOCS_VENV = SARGE_HOME / 'var' / 'pubdocs-venv'
 PUBDOCS_ES_BIN = (SARGE_HOME / 'var' / 'pubdocs-es' /
                   'elasticsearch-0.19.9' / 'bin')
+PUBDOCS_TIKA_URL = 'http://www.eu.apache.org/dist/tika/tika-app-1.2.jar'
 
 PUBDOCS_CONFIG = {
     'REDIS_VAR': REDIS_VAR,
@@ -31,6 +32,8 @@ PUBDOCS_CONFIG = {
     'PUBDOCS_VENV': PUBDOCS_VENV,
     'PUBDOCS_ES_BIN': PUBDOCS_ES_BIN,
     'PYTHONPATH': '.',
+    'PUBDOCS_TIKA_PORT': '27303',
+    'PUBDOCS_TIKA_JAR': PUBDOCS_VENV / 'tika-app-1.2.jar',
 }
 
 
@@ -46,6 +49,7 @@ env.update({
     'pubdocs_es_attach_spec': ES_ATTACH_SPEC,
     'pubdocs_es_bin': PUBDOCS_ES_BIN,
     'pubdocs_es_data': PUBDOCS_CONFIG['ES_PATH_DATA'],
+    'pubdocs_tika_url': PUBDOCS_TIKA_URL,
 })
 
 
@@ -78,6 +82,12 @@ def elasticsearch():
         run("curl -L '{pubdocs_es_kit}' | tar xzf -".format(**env))
         run("{pubdocs_es_bin}/plugin -install '{pubdocs_es_attach_spec}'"
             .format(**env))
+
+
+@task
+def install_tika():
+    with cd(env['pubdocs_venv']):
+        run("curl -LO '{pubdocs_tika_url}'".format(**env))
 
 
 @task
