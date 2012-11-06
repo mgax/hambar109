@@ -2,6 +2,7 @@
 from base64 import b64encode
 import flask
 import requests
+import re
 import os
 import sys
 import subprocess
@@ -12,6 +13,7 @@ from celery.signals import setup_logging
 from tempfile import NamedTemporaryFile as NamedTempFile
 from tempfile import TemporaryFile
 from harvest import appcontext, celery
+from pyquery import PyQuery as pq
 
 import utils
 from html2text import html2text
@@ -88,10 +90,8 @@ def index(file_path, debug=False):
             log.critical(exp)
         from time import time
         start = time()
-        clean(temp.name, debug)
+        text = clean(temp.name, debug)
         duration = time() - start
-        with open(temp.name) as tmp:
-            text = tmp.read()
         index_data = {
             'file': b64encode(text),
             'path': file_path,
@@ -119,21 +119,13 @@ def chars_debug(match, text, debug=False):
         bad = match.group(0)
         good = utils.chars_mapping[bad]
     except KeyError as exp:
-        good = utils.chars_mapping.get(bad, '???')
-    finally:
-        old = (text[match.start()-20:match.start()] +
-               bcolors.FAIL +
-               bad +
-               bcolors.ENDC +
-               text[match.end():match.end()+20]
-              )
-        new = (text[match.start()-20:match.start()] +
-               bcolors.OKGREEN +
-               good +
-               bcolors.ENDC +
-               text[match.end():match.end()+20]
-              )
-        message = '%s\n%s\n' %(old, new)
+        context = (text[match.start()-20:match.start()] +
+                   bcolors.FAIL +
+                   bad +
+                   bcolors.ENDC +
+                   text[match.end():match.end()+20]
+                  )
+        message = '%s\n' %context
         print ('------------'+ bcolors.FAIL +
                repr(bad) +
                bcolors.ENDC + '------------\n')
@@ -143,25 +135,28 @@ def chars_debug(match, text, debug=False):
 
 
 import re
-pat3 = re.compile(r'([^\x00-\x7F][^\x00-\x7F][^\x00-\x7F])')
-pat2 = re.compile(r'([^\x00-\x7F][^\x00-\x7F])')
+pat = re.compile(r'([^\x00-\x7F]{2,6})')
 def clean(file_path, debug):
     """ Index a file from the repositoy. """
+    import itertools
     with open(file_path, 'r') as data:
-        with NamedTempFile(mode='a', delete=False) as cleaned:
-            text = data.read()
-            for bad, good in utils.chars_mapping.iteritems():
-                text = text.replace(bad, good)
-            if debug:
-                for match in pat3.finditer(text):
+        text = data.read()
+        for bad, good in utils.chars_mapping.iteritems():
+            text = text.replace(bad, good)
+        if debug:
+            good_cases = []
+            perm = []
+            for k in [2, 3]:
+                perm+=list(itertools.product(utils.good_chars, repeat=k))
+            for p in perm:
+                good_cases.append(''.join(p))
+            for match in pat.finditer(text):
+                for case in good_cases:
+                    if match.group(0) in case:
+                        break
+                else:
                     chars_debug(match, text, True)
-                for match in pat2.finditer(text):
-                    chars_debug(match, text, True)
-
-    with open(cleaned.name, 'rb') as f:
-        with open(file_path, 'wb') as origin:
-            text = text.decode('ISO-8859-1')
-            origin.write(text.encode('UTF8'))
+        return text
 
 
 @search_pages.route('/')
@@ -227,9 +222,10 @@ def register_commands(manager):
         """ Search the index. """
         print flask.json.dumps(es_search(text), indent=2)
 
-    @manager.command
-    def index_file(file_path, debug):
-        index(file_path, debug)
+    @manager.option('-d', '--debug', action='store_true')
+    @manager.option('-p', '--path')
+    def index_file(path, debug):
+        index(path, debug)
 
     @manager.option('-d', '--debug', action='store_true')
     @manager.option('-s', '--section', default=None)
@@ -255,3 +251,33 @@ def register_commands(manager):
                 sys.stdout.flush()
 
         print ' done'
+
+    no_pat = re.compile('(?<=^)\d+')
+    name_pat = re.compile('(?<=\xe2\x80\x94 Lege privind ).+(?= \.)')
+    interval_pat = re.compile('(\d+)\xe2\x80\x93(\d+)$')
+    @manager.command
+    def extract_laws_summary(file_path):
+        from harvest import build_fs_path
+        no = name = start_pg = end_pg = None
+        laws = []
+        fs_path = build_fs_path(file_path)
+        with NamedTempFile(mode='w+b', delete=False) as temp:
+            command = ('pdf2htmlEX --process-nontext 0 --dest-dir '
+                       '/tmp %s %s' %(fs_path, temp.name.split('/')[-1]))
+            subprocess.check_call(command, shell=True)
+        with open(temp.name, 'rb') as tmp:
+            html = pq(tmp.read())
+            for div in html('#p1 .b .h3'):
+                sum_entry = div.text_content()
+                if 'Lege privind' in sum_entry:
+                    if no_pat.search(sum_entry):
+                        import pdb; pdb.set_trace()
+                        no = no_pat.search(sum_entry).group(0)
+                    if name_pat.search(sum_entry):
+                        name = name_pat.search(sum_entry).group(0)
+                    if interval_pat.search(sum_entry):
+                        start_pg = interval_pat.search(sum_entry).group(1)
+                        end_pg = interval_pat.search(sum_entry).group(2)
+                    laws.append([no, name, start_pg, end_pg])
+        os.remove(temp.name)
+        return laws

@@ -40,7 +40,7 @@ contents::
     PUBDOCS_ES_URL=http://localhost:5300
     PUBDOCS_ES_BIN=sandbox/elasticsearch-0.19.9/bin
     PUBDOCS_TIKA_JAR=sandbox/tika-app-1.2.jar
-    PUBDOCS_TIKA_PORT=5300
+    PUBDOCS_TIKA_PORT=5400
 
 5. Activate the virtualenv. This needs to be done in each shell session
 before you run the app. It just configures your ``$PATH`` so that it
