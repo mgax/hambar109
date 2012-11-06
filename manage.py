@@ -29,6 +29,11 @@ def create_app():
     def crashme():
         raise RuntimeError("Crashing, as requested.")
 
+    @app.route('/robots.txt')
+    def robots_txt():
+        return flask.Response('User-agent: *\nDisallow: /\n',
+                              content_type='text/plain')
+
     return app
 
 
