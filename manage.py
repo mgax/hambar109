@@ -51,10 +51,19 @@ def runfcgi(port):
     WSGIServer(app, debug=app.debug, bindAddress=addr).run()
 
 
+@manager.option('-p', '--port', type=int, default=5000)
+def tornado(port):
+    from tornado.wsgi import WSGIContainer
+    from tornado.httpserver import HTTPServer
+    from tornado.ioloop import IOLoop
+
+    app = create_app()
+    http_server = HTTPServer(WSGIContainer(app))
+    http_server.listen(port)
+    IOLoop.instance().start()
+
+
 if __name__ == '__main__':
     from utils import set_up_logging
     set_up_logging()
     manager.run()
-
-else:
-    app = create_app()

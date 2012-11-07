@@ -13,7 +13,7 @@ celery-redis-unixsocket==0.2
 redis==2.6.2
 path.py==2.4
 Unidecode==0.04.9
-gunicorn==0.15.0
 pyquery==1.2.1
 lxml==3.0.1
 cssselect==0.7.1
+tornado==2.4
