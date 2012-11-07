@@ -58,7 +58,9 @@ def tornado(port):
     from tornado.ioloop import IOLoop
 
     app = create_app()
-    http_server = HTTPServer(WSGIContainer(app))
+    wsgi_container = WSGIContainer(app)
+    wsgi_container._log = lambda *args, **kwargs: None
+    http_server = HTTPServer(wsgi_container)
     http_server.listen(port)
     IOLoop.instance().start()
 
