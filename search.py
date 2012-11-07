@@ -9,6 +9,7 @@ import subprocess
 import logging
 import socket
 from path import path
+from time import time
 from celery.signals import setup_logging
 from tempfile import NamedTemporaryFile as NamedTempFile
 from tempfile import TemporaryFile
@@ -80,6 +81,7 @@ def index(file_path, debug=False):
     (section, year, name) = file_path.replace(repo, "").split('/')
     fs_path = build_fs_path(file_path)
     with NamedTempFile(mode='w+b', delete=True) as temp:
+        start = time()
         try:
             with open(fs_path, 'rb') as pdf_file:
                 for chunk in invoke_tika(pdf_file, port=tika_port):
@@ -88,10 +90,7 @@ def index(file_path, debug=False):
 
         except Exception as exp:
             log.critical(exp)
-        from time import time
-        start = time()
         text = clean(temp.name, debug)
-        duration = time() - start
         index_data = {
             'file': b64encode(text),
             'path': file_path,
@@ -104,6 +103,7 @@ def index(file_path, debug=False):
         if index_resp.status_code == 200:
             log.info('Skipping. Already indexed!')
         else:
+            duration = time() - start
             log.info('%s[indexed in %f]' %(fs_path.name, duration))
 
 
