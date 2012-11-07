@@ -2,7 +2,7 @@ Flask==0.9
 Flask-Script==0.5.0
 Jinja2==2.6
 Werkzeug==0.8.3
-requests==0.14.0
+requests==0.14.2
 amqplib==1.0.2
 anyjson==0.3.3
 billiard==2.7.3.17
