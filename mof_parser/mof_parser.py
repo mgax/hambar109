@@ -38,6 +38,8 @@ ARTICLE_TYPES = [
 
 ]
 
+ARTICLE_TYPE = {t['type']: t for t in ARTICLE_TYPES}
+
 ARTICLE_TYPE_BY_HEADLINE = {t['group-headline']: t for t in ARTICLE_TYPES}
 
 
@@ -132,6 +134,33 @@ def preprocess(html):
     return lines
 
 
+class CcParser(object):
+
+    article_type = ARTICLE_TYPE['decizie-cc']
+
+    def summary(self, lines):
+        return [{'section': self.article_type['type'], 'title': lines[0]}]
+
+
+class HgParser(CcParser):
+
+    article_type = ARTICLE_TYPE['hotarare-guvern']
+
+
+class AdminActParser(HgParser):
+
+    article_type = ARTICLE_TYPE['act-admin-centrala']
+
+
+class BnrActParser(HgParser):
+
+    article_type = ARTICLE_TYPE['act-bnr']
+
+
+for cls in [CcParser, HgParser, AdminActParser, BnrActParser]:
+    ARTICLE_TYPE[cls.article_type['type']]['parser'] = cls
+
+
 def parse_tika(lines):
     articles = []
 
@@ -154,8 +183,8 @@ def parse_tika(lines):
                 if summary_section_lines:
                     log.debug("(%d) finishing up summary section %r",
                               lineno, summary_section)
-                    articles.append({'section': summary_section,
-                                     'title': summary_section_lines[0]})
+                    parser = ARTICLE_TYPE[summary_section]['parser']()
+                    articles.extend(parser.summary(summary_section_lines))
 
                 article_type = ARTICLE_TYPE_BY_HEADLINE[line]
                 summary_section = article_type['type']
