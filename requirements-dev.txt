@@ -1,2 +1,3 @@
 -r requirements.txt
 https://github.com/nickstenning/honcho/zipball/master
+nose==1.2.1
