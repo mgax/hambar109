@@ -26,6 +26,8 @@ class ParserPreprocessorTest(unittest.TestCase):
         self.assertIn(u"SUMAR", self.lines)
         self.assertIn(u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI",
                       self.lines)
+        self.assertIn(u"ACTE ALE ORGANELOR DE SPECIALITATE ALE "
+                      u"ADMINISTRAȚIEI PUBLICE CENTRALE", self.lines)
 
 
 class MofParserTest(unittest.TestCase):
