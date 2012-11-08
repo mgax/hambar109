@@ -44,6 +44,16 @@ class HtmlPage(object):
         return HtmlElementList(sel(self._doc))
 
 
+def preprocess(html):
+    lines = []
+    page = HtmlPage(html)
+    for el in page.select('body > div > *'):
+        text = el.text_content().strip()
+        wordtext = cleanspace(text)
+        lines.append(wordtext)
+    return lines
+
+
 def replace_nbsp(text):
     return text.replace(u'\xa0', ' ')
 

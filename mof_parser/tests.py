@@ -2,10 +2,20 @@
 import unittest
 from datetime import date
 from path import path
-from mof_parser import parse
+from mof_parser import preprocess, parse
 
 
 DATA = path(__file__).abspath().parent / 'data'
+
+
+class ParserPreprocessorTest(unittest.TestCase):
+
+    def setUp(self):
+        self.raw = (DATA / 'mof1_2009_0174-tika.html').bytes()
+        self.lines = preprocess(self.raw)
+
+    def test_summary_lines(self):
+        self.assertIn(u"DECIZII ALE CURȚII CONSTITUȚIONALE", self.lines)
 
 
 class MofParserTest(unittest.TestCase):
