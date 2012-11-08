@@ -145,16 +145,24 @@ def parse_tika(lines):
         if document_part == 'start':
             if line == 'SUMAR':
                 document_part = 'summary'
+                summary_section_lines = []
                 continue
 
         if document_part == 'summary':
             if line in HEADLINES2:
+
+                if summary_section_lines:
+                    log.debug("(%d) finishing up summary section %r",
+                              lineno, summary_section)
+                    articles.append({'section': summary_section,
+                                     'title': summary_section_lines[0]})
+
                 article_type = ARTICLE_TYPE_BY_HEADLINE[line]
                 summary_section = article_type['type']
                 log.debug("(%d) Summary section %r", lineno, summary_section)
                 continue
 
-            articles.append({'section': summary_section, 'title': line})
+            summary_section_lines.append(line)
             continue
 
     return articles
