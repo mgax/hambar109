@@ -60,6 +60,18 @@ class TikaMofParserTest(unittest.TestCase):
         self.assertIn((u"încetarea exercitării funcției publice de "
                        u"subprefect al județului Alba"), hg_290['title'])
 
+    def test_titles_end_with_no_page_number(self):
+        cc_decision = self.data[0]
+        self.assertTrue(cc_decision['title'].endswith(
+                u"funcționarea Curții Constituționale"))
+
+        hg_290 = self.data[2]
+        self.assertTrue(hg_290['title'].endswith(u"către domnul Popa Romul"))
+
+        bnr_act = self.data[10]
+        self.assertTrue(bnr_act['title'].endswith(
+                u"24 februarie\u201423 martie 2009"))
+
     def test_article_counts_by_section_are_correct(self):
         from collections import defaultdict
         counts = defaultdict(int)

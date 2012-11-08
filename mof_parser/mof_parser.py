@@ -139,10 +139,17 @@ class CcParser(object):
 
     article_type = ARTICLE_TYPE['decizie-cc']
 
+    title_end = re.compile(ur'\s+(\.+\s+)?\d+(–\d+)?$')
+
+    def clean_title_end(self, raw_title):
+        return self.title_end.sub('', raw_title.strip())
+
     def summary(self, lines):
+        title = self.clean_title_end(' '.join(lines))
+        log.debug("Title from summary: %r", title)
         return [{
             'section': self.article_type['type'],
-            'title': ' '.join(lines),
+            'title': title,
         }]
 
 
@@ -159,9 +166,11 @@ class HgParser(CcParser):
         current_title = None
 
         def finish_title():
+            title = self.clean_title_end(' '.join(current_title))
+            log.debug("Title from summary: %r", title)
             articles.append({
                 'section': self.article_type['type'],
-                'title': ' '.join(current_title),
+                'title': title,
             })
 
         for line in lines:
