@@ -20,6 +20,10 @@ HEADLINES = [
     u"ACTE ALE BĂNCII NATIONALE A ROMÂNIEI",
 ]
 
+HEADLINES2 = [
+    u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI",
+]
+
 AUTHORITIES = [
     u"CURTEA CONSTITUTIONALĂ",
     u"GUVERNUL ROMÂNIEI",
@@ -57,8 +61,26 @@ def preprocess(html):
         lineno += 1
         line = lines[lineno]
 
+        if not line:
+            continue
+
         if line == 'S U M A R':
             lines[lineno] = 'SUMAR'
+            continue
+
+        for headline in HEADLINES2:
+            if line == headline:
+                log.debug('(%d) Found headline %r', lineno, line)
+                continue
+            elif headline.startswith(line):
+                log.debug('(%d) Found start of headline %r', lineno, line)
+                for n in range(2, 10):
+                    concat = ' '.join(lines[lineno:lineno+n])
+                    log.debug('Trying %d lines: %r', n, concat)
+                    if concat == headline:
+                        log.debug("It's a match!")
+                        lines[lineno:lineno+n] = [concat]
+                        break
 
     return lines
 

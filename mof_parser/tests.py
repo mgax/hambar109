@@ -17,6 +17,8 @@ class ParserPreprocessorTest(unittest.TestCase):
     def test_summary_lines(self):
         self.assertIn(u"DECIZII ALE CURȚII CONSTITUȚIONALE", self.lines)
         self.assertIn(u"SUMAR", self.lines)
+        self.assertIn(u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI",
+                      self.lines)
 
 
 class MofParserTest(unittest.TestCase):
