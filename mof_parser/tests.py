@@ -50,6 +50,14 @@ class TikaMofParserTest(unittest.TestCase):
         cc_decision = self.data[0]
         self.assertTrue(cc_decision['title'].startswith(
                             u"Decizia nr. 258 din 24 februarie 2009"))
+        self.assertIn((u"judiciare de timbru, precum și ale art. 29 alin. "
+                       u"(6) din Legea nr. 47/1992"), cc_decision['title'])
+
+    def test_hg_second_section_has_correct_title(self):
+        hg_290 = self.data[2]
+        self.assertEqual(hg_290['section'], 'hotarare-guvern')
+        self.assertIn((u"încetarea exercitării funcției publice de "
+                       u"subprefect al județului Alba"), hg_290['title'])
 
 
 class MofParserTest(unittest.TestCase):

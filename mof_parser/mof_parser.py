@@ -139,22 +139,64 @@ class CcParser(object):
     article_type = ARTICLE_TYPE['decizie-cc']
 
     def summary(self, lines):
-        return [{'section': self.article_type['type'], 'title': lines[0]}]
+        return [{
+            'section': self.article_type['type'],
+            'title': ' '.join(lines),
+        }]
 
 
 class HgParser(CcParser):
 
     article_type = ARTICLE_TYPE['hotarare-guvern']
 
+    title_begin = re.compile(ur'^(?P<number>\d+). — '
+                             ur'(?P<type>Ordonanță de urgență|'
+                                      ur'Hotărâre)')
+
+    def summary(self, lines):
+        articles = []
+        current_title = None
+
+        def finish_title():
+            articles.append({
+                'section': self.article_type['type'],
+                'title': ' '.join(current_title),
+            })
+
+        for line in lines:
+            begin_match = self.title_begin.match(line)
+
+            if begin_match is not None:
+                if current_title is not None:
+                    finish_title()
+                current_title = [line]
+
+            else:
+                if current_title is None:
+                    msg = ("%s can't understand summary first line %r" %
+                           (self.__class__.__name__, line))
+                    raise RuntimeError(msg)
+                current_title.append(line)
+
+        finish_title()
+
+        return articles
+
 
 class AdminActParser(HgParser):
 
     article_type = ARTICLE_TYPE['act-admin-centrala']
 
+    title_begin = re.compile(ur'^(?P<number>\d+). — '
+                             ur'(?P<type>Ordin al ministrului)')
+
 
 class BnrActParser(HgParser):
 
     article_type = ARTICLE_TYPE['act-bnr']
+
+    title_begin = re.compile(ur'^(?P<number>\d+). — '
+                             ur'(?P<type>Circulară)')
 
 
 for cls in [CcParser, HgParser, AdminActParser, BnrActParser]:
@@ -175,6 +217,7 @@ def parse_tika(lines):
             if line == 'SUMAR':
                 document_part = 'summary'
                 summary_section_lines = []
+                summary_seen_sections = set()
                 continue
 
         if document_part == 'summary':
@@ -185,9 +228,19 @@ def parse_tika(lines):
                               lineno, summary_section)
                     parser = ARTICLE_TYPE[summary_section]['parser']()
                     articles.extend(parser.summary(summary_section_lines))
+                    summary_section_lines[:] = []
 
                 article_type = ARTICLE_TYPE_BY_HEADLINE[line]
                 summary_section = article_type['type']
+
+                if summary_section in summary_seen_sections:
+                    log.debug("(%d) Summary over, found section %r again",
+                              lineno, summary_section)
+                    document_part = 'body'
+                    lineno -= 1
+                    continue
+
+                summary_seen_sections.add(summary_section)
                 log.debug("(%d) Summary section %r", lineno, summary_section)
                 continue
 
