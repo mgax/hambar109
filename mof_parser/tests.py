@@ -59,6 +59,18 @@ class TikaMofParserTest(unittest.TestCase):
         self.assertIn((u"încetarea exercitării funcției publice de "
                        u"subprefect al județului Alba"), hg_290['title'])
 
+    def test_article_counts_by_section_are_correct(self):
+        from collections import defaultdict
+        counts = defaultdict(int)
+        for article in self.data:
+            counts[article['section']] += 1
+        self.assertEqual(counts, {
+            'decizie-cc': 1,
+            'hotarare-guvern': 8,
+            'act-admin-centrala': 1,
+            'act-bnr': 1,
+        })
+
 
 class MofParserTest(unittest.TestCase):
 
