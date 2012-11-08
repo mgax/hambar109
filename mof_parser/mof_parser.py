@@ -20,10 +20,26 @@ HEADLINES = [
     u"ACTE ALE BĂNCII NATIONALE A ROMÂNIEI",
 ]
 
-HEADLINES2 = [
-    u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI",
-    u"ACTE ALE ORGANELOR DE SPECIALITATE ALE ADMINISTRAȚIEI PUBLICE CENTRALE",
+
+ARTICLE_TYPES = [
+
+    {'type': 'decizie-cc',
+     'group-headline': u"DECIZII ALE CURȚII CONSTITUȚIONALE"},
+
+    {'type': 'hotarare-guvern',
+     'group-headline': u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI"},
+
+    {'type': 'act-admin-centrala',
+     'group-headline': (u"ACTE ALE ORGANELOR DE SPECIALITATE ALE "
+                        u"ADMINISTRAȚIEI PUBLICE CENTRALE")},
+
+    {'type': 'act-bnr',
+     'group-headline': u"ACTE ALE BĂNCII NAȚIONALE A ROMÂNIEI"},
+
 ]
+
+
+HEADLINES2 = [t['group-headline'] for t in ARTICLE_TYPES]
 
 AUTHORITIES = [
     u"CURTEA CONSTITUTIONALĂ",
@@ -112,6 +128,22 @@ def preprocess(html):
                         break
 
     return lines
+
+
+def parse_tika(lines):
+    articles = []
+
+    lineno = -1
+    while lineno < len(lines) - 1:
+        lineno += 1
+        line = lines[lineno]
+
+        for article_type in ARTICLE_TYPES:
+            if line == article_type['group-headline']:
+                articles.append({'section': article_type['type']})
+                continue
+
+    return articles
 
 
 def replace_nbsp(text):

@@ -2,7 +2,7 @@
 import unittest
 from datetime import date
 from path import path
-from mof_parser import preprocess, parse
+from mof_parser import preprocess, parse, parse_tika
 
 
 DATA = path(__file__).abspath().parent / 'data'
@@ -32,6 +32,19 @@ class ParserPreprocessorTest(unittest.TestCase):
                              for line in self.lines))
         self.assertFalse(any(line.startswith(u"D E C I Z I I  A L E")
                              for line in self.lines))
+
+
+class TikaMofParserTest(unittest.TestCase):
+
+    def setUp(self):
+        self.raw = (DATA / 'mof1_2009_0174-tika.html').bytes()
+        self.lines = preprocess(self.raw)
+        self.data = parse_tika(self.lines)
+
+    def test_all_sections_found(self):
+        sections = set(article['section'] for article in self.data)
+        self.assertItemsEqual(sections, ['decizie-cc', 'hotarare-guvern',
+                                         'act-admin-centrala', 'act-bnr'])
 
 
 class MofParserTest(unittest.TestCase):
