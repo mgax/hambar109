@@ -56,6 +56,8 @@ def preprocess(html):
         wordtext = cleanspace(text)
         lines.append(wordtext)
 
+    header = None
+
     lineno = -1
     while lineno < len(lines) - 1:
         lineno += 1
@@ -66,6 +68,16 @@ def preprocess(html):
 
         if line == 'Nr. Pagina Nr. Pagina':
             lines[lineno:lineno+1] = []
+
+        if header is None:
+            if line.startswith(u"MONITORUL OFICIAL AL ROMÂNIEI, PARTEA"):
+                header = line
+                log.debug('(%d) Identified header %r', lineno, header)
+
+        if line == header:
+            log.debug('(%d) Remove repeating header', lineno)
+            lines[lineno:lineno+1] = []
+            continue
 
         if line == 'S U M A R':
             lines[lineno] = 'SUMAR'
