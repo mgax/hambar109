@@ -51,6 +51,15 @@ def preprocess(html):
         text = el.text_content().strip()
         wordtext = cleanspace(text)
         lines.append(wordtext)
+
+    lineno = -1
+    while lineno < len(lines) - 1:
+        lineno += 1
+        line = lines[lineno]
+
+        if line == 'S U M A R':
+            lines[lineno] = 'SUMAR'
+
     return lines
 
 
