@@ -64,6 +64,9 @@ def preprocess(html):
         if not line:
             continue
 
+        if line == 'Nr. Pagina Nr. Pagina':
+            lines[lineno:lineno+1] = []
+
         if line == 'S U M A R':
             lines[lineno] = 'SUMAR'
             continue

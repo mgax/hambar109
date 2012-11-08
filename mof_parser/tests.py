@@ -14,6 +14,10 @@ class ParserPreprocessorTest(unittest.TestCase):
         self.raw = (DATA / 'mof1_2009_0174-tika.html').bytes()
         self.lines = preprocess(self.raw)
 
+    def test_remove_junk(self):
+        self.assertFalse(any(line.startswith('Nr. Pagina')
+                             for line in self.lines))
+
     def test_summary_lines(self):
         self.assertIn(u"DECIZII ALE CURȚII CONSTITUȚIONALE", self.lines)
         self.assertIn(u"SUMAR", self.lines)
