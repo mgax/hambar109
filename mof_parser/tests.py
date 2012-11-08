@@ -19,6 +19,7 @@ class ParserPreprocessorTest(unittest.TestCase):
                              for line in self.lines))
         header = u"MONITORUL OFICIAL AL ROMÂNIEI, PARTEA I"
         self.assertFalse(any(line.startswith(header) for line in self.lines))
+        self.assertFalse(any(line == '10' for line in self.lines))
 
     def test_summary_lines(self):
         self.assertIn(u"DECIZII ALE CURȚII CONSTITUȚIONALE", self.lines)

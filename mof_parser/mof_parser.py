@@ -77,6 +77,11 @@ def preprocess(html):
         if line == header:
             log.debug('(%d) Remove repeating header', lineno)
             lines[lineno:lineno+1] = []
+            next_line = lines[lineno]
+            if all(ch in '0123456789' for ch in next_line):
+                log.debug('(%d) Also remove page number after header %r',
+                          lineno, next_line)
+                lines[lineno:lineno+1] = []
             continue
 
         if line == 'S U M A R':
