@@ -32,7 +32,7 @@ class ParserPreprocessorTest(unittest.TestCase):
                              for line in self.lines))
         self.assertFalse(any(line.startswith(u"D E C I Z I I  A L E")
                              for line in self.lines))
-        self.assertIn(u"DECIZIA  Nr. 258", self.lines)
+        self.assertIn(u"DECIZIA Nr. 258", self.lines)
 
 
 class TikaMofParserTest(unittest.TestCase):

@@ -69,7 +69,8 @@ class HtmlPage(object):
         return HtmlElementList(sel(self._doc))
 
 
-spaced_headline = re.compile(r'\b(\w\s){3,}\w\b', re.UNICODE)
+spaced_headline = re.compile(r'\b(\w\s){2,}\w\b', re.UNICODE)
+multispace = re.compile(r'\s+')
 
 
 def preprocess(html):
@@ -110,7 +111,8 @@ def preprocess(html):
 
         if spaced_headline.match(line) is not None:
             replace = lambda m: m.group(0).replace(' ', '')
-            fixed_line = spaced_headline.sub(replace, line)
+            almost_fixed_line = spaced_headline.sub(replace, line)
+            fixed_line = multispace.sub(' ', almost_fixed_line)
             log.debug('(%d) Fix spaced headline %r -> %r',
                       lineno, line, fixed_line)
             lines[lineno] = fixed_line
