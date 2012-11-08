@@ -38,6 +38,8 @@ ARTICLE_TYPES = [
 
 ]
 
+ARTICLE_TYPE_BY_HEADLINE = {t['group-headline']: t for t in ARTICLE_TYPES}
+
 
 HEADLINES2 = [t['group-headline'] for t in ARTICLE_TYPES]
 
@@ -133,15 +135,27 @@ def preprocess(html):
 def parse_tika(lines):
     articles = []
 
+    document_part = 'start'
+
     lineno = -1
     while lineno < len(lines) - 1:
         lineno += 1
         line = lines[lineno]
 
-        for article_type in ARTICLE_TYPES:
-            if line == article_type['group-headline']:
-                articles.append({'section': article_type['type']})
+        if document_part == 'start':
+            if line == 'SUMAR':
+                document_part = 'summary'
                 continue
+
+        if document_part == 'summary':
+            if line in HEADLINES2:
+                article_type = ARTICLE_TYPE_BY_HEADLINE[line]
+                summary_section = article_type['type']
+                log.debug("(%d) Summary section %r", lineno, summary_section)
+                continue
+
+            articles.append({'section': summary_section, 'title': line})
+            continue
 
     return articles
 
