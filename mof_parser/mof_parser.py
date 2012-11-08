@@ -49,6 +49,10 @@ class HtmlPage(object):
         return HtmlElementList(sel(self._doc))
 
 
+spaced_headline = re.compile(r'^(\w\s{1,2})+\w$', re.UNICODE)
+spaced_headline_space = re.compile(r'\s{1,2}')
+
+
 def preprocess(html):
     lines = []
     page = HtmlPage(html)
@@ -85,8 +89,12 @@ def preprocess(html):
                 lines[lineno:lineno+1] = []
             continue
 
-        if line == 'S U M A R':
-            lines[lineno] = 'SUMAR'
+        if spaced_headline.match(line) is not None:
+            replace = lambda m: m.group(0)[1:]
+            fixed_line = spaced_headline_space.sub(replace, line)
+            log.debug('(%d) Fix spaced headline %r -> %r',
+                      lineno, line, fixed_line)
+            lines[lineno] = fixed_line
             continue
 
         for headline in HEADLINES2:
