@@ -207,101 +207,103 @@ for cls in [CcParser, HgParser, AdminActParser, BnrActParser]:
     ARTICLE_TYPE[cls.article_type['type']]['parser'] = cls
 
 
-def parse_mof(lines):
-    articles = []
+class MofParser(object):
 
-    document_part = 'start'
-    article_lines = None
+    def parse(self, lines):
+        articles = []
 
-    lineno = -1
-    while lineno < len(lines) - 1:
-        lineno += 1
-        line = lines[lineno]
-        line_nsl = nospacelower(line)
+        document_part = 'start'
+        article_lines = None
 
-        if document_part == 'start':
-            if line == 'SUMAR':
-                document_part = 'summary'
-                summary_section_lines = []
-                summary_seen_sections = set()
-                continue
+        lineno = -1
+        while lineno < len(lines) - 1:
+            lineno += 1
+            line = lines[lineno]
+            line_nsl = nospacelower(line)
 
-        if document_part == 'summary':
-            if line_nsl in ARTICLE_TYPE_BY_HEADLINE:
-
-                if summary_section_lines:
-                    log.debug("(%d) finishing up summary section %r",
-                              lineno, summary_section)
-                    parser = ARTICLE_TYPE[summary_section]['parser']()
-                    articles.extend(parser.summary(summary_section_lines))
-                    summary_section_lines[:] = []
-
-                article_type = ARTICLE_TYPE_BY_HEADLINE[line_nsl]
-                summary_section = article_type['type']
-
-                if summary_section in summary_seen_sections:
-                    log.debug("(%d) Summary over, found section %r again",
-                              lineno, summary_section)
-                    document_part = 'body'
-                    body_article_queue = list(articles)
-                    lineno -= 1
+            if document_part == 'start':
+                if line == 'SUMAR':
+                    document_part = 'summary'
+                    summary_section_lines = []
+                    summary_seen_sections = set()
                     continue
 
-                summary_seen_sections.add(summary_section)
-                log.debug("(%d) Summary section %r", lineno, summary_section)
-                continue
+            if document_part == 'summary':
+                if line_nsl in ARTICLE_TYPE_BY_HEADLINE:
 
-            summary_section_lines.append(line)
-            continue
+                    if summary_section_lines:
+                        log.debug("(%d) finishing up summary section %r",
+                                  lineno, summary_section)
+                        parser = ARTICLE_TYPE[summary_section]['parser']()
+                        articles.extend(parser.summary(summary_section_lines))
+                        summary_section_lines[:] = []
 
-        if document_part == 'body':
-            if line_nsl in ARTICLE_TYPE_BY_HEADLINE:
-                body_section = ARTICLE_TYPE_BY_HEADLINE[line_nsl]['type']
-                log.debug("(%d) beginning of body section %r",
-                          lineno, body_section)
-                continue
+                    article_type = ARTICLE_TYPE_BY_HEADLINE[line_nsl]
+                    summary_section = article_type['type']
 
-            origin_headlines = ARTICLE_TYPE[body_section]['origin-headlines']
-            if line_nsl in map(nospacelower, origin_headlines):
-                log.debug("(%d) origin headline %r", lineno, line)
-                continue
+                    if summary_section in summary_seen_sections:
+                        log.debug("(%d) Summary over, found section %r again",
+                                  lineno, summary_section)
+                        document_part = 'body'
+                        body_article_queue = list(articles)
+                        lineno -= 1
+                        continue
 
-            if body_article_queue:
-                next_article = body_article_queue[0]
-                next_headline = nospacelower(next_article['headline'])
-
-            else:
-                next_article = 'NO SUCH HEADLINE'
-
-            if line and next_headline.startswith(line_nsl):
-                log.debug("(%d) possible title match %r %r",
-                          lineno, line, next_headline)
-
-                is_match = False
-                for n in range(1, 4):
-                    concat = nospacelower(' '.join(lines[lineno:lineno+n]))
-                    log.debug('Trying %d lines: %r', n, concat)
-                    if concat == next_headline:
-                        log.debug("It's a match!")
-                        lineno += n-1
-                        is_match = True
-                        break
-
-                if is_match:
-                    if article_lines:
-                        current_article['body'] = '\n'.join(article_lines)
-                    article_lines = []
-                    current_article = body_article_queue.pop(0)
+                    summary_seen_sections.add(summary_section)
+                    log.debug("(%d) Summary section %r", lineno, summary_section)
                     continue
 
-            article_lines.append(line)
-            continue
+                summary_section_lines.append(line)
+                continue
 
-    if article_lines:
-        current_article['body'] = '\n'.join(article_lines)
+            if document_part == 'body':
+                if line_nsl in ARTICLE_TYPE_BY_HEADLINE:
+                    body_section = ARTICLE_TYPE_BY_HEADLINE[line_nsl]['type']
+                    log.debug("(%d) beginning of body section %r",
+                              lineno, body_section)
+                    continue
 
-    if body_article_queue:
-        log.warn("Only matched %d out of %d articles",
-                 len(articles) - len(body_article_queue), len(articles))
+                origin_headlines = ARTICLE_TYPE[body_section]['origin-headlines']
+                if line_nsl in map(nospacelower, origin_headlines):
+                    log.debug("(%d) origin headline %r", lineno, line)
+                    continue
 
-    return articles
+                if body_article_queue:
+                    next_article = body_article_queue[0]
+                    next_headline = nospacelower(next_article['headline'])
+
+                else:
+                    next_article = 'NO SUCH HEADLINE'
+
+                if line and next_headline.startswith(line_nsl):
+                    log.debug("(%d) possible title match %r %r",
+                              lineno, line, next_headline)
+
+                    is_match = False
+                    for n in range(1, 4):
+                        concat = nospacelower(' '.join(lines[lineno:lineno+n]))
+                        log.debug('Trying %d lines: %r', n, concat)
+                        if concat == next_headline:
+                            log.debug("It's a match!")
+                            lineno += n-1
+                            is_match = True
+                            break
+
+                    if is_match:
+                        if article_lines:
+                            current_article['body'] = '\n'.join(article_lines)
+                        article_lines = []
+                        current_article = body_article_queue.pop(0)
+                        continue
+
+                article_lines.append(line)
+                continue
+
+        if article_lines:
+            current_article['body'] = '\n'.join(article_lines)
+
+        if body_article_queue:
+            log.warn("Only matched %d out of %d articles",
+                     len(articles) - len(body_article_queue), len(articles))
+
+        return articles
