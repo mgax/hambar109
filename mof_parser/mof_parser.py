@@ -1,6 +1,5 @@
 # encoding: utf-8
 import re
-from datetime import date
 import logging
 import lxml.html, lxml.cssselect
 
@@ -10,6 +9,10 @@ log = logging.getLogger(__name__)
 
 def nospacelower(text):
     return text.replace(' ', '').lower()
+
+
+def cleanspace(text):
+    return re.sub(r'\s+', text.replace('\n', ' '), ' ').strip()
 
 
 ARTICLE_TYPES = [
@@ -39,33 +42,17 @@ ARTICLE_TYPE_BY_HEADLINE = {nospacelower(t['group-headline']): t
                             for t in ARTICLE_TYPES}
 
 
-HEADLINES2 = [t['group-headline'] for t in ARTICLE_TYPES]
-
-
-class HtmlElementList(list):
-
-    def text(self):
-        return ' '.join(e.text_content() for e in self)
-
-
-class HtmlPage(object):
-
-    def __init__(self, html):
-        self._doc = lxml.html.fromstring(html)
-
-    def select(self, css_selector):
-        sel = lxml.cssselect.CSSSelector(css_selector)
-        return HtmlElementList(sel(self._doc))
-
-
 spaced_headline = re.compile(r'\b(\w\s){2,}\w\b', re.UNICODE)
 multispace = re.compile(r'\s+')
 
 
 def preprocess(html):
+    HEADLINES = [t['group-headline'] for t in ARTICLE_TYPES]
+
     lines = []
-    page = HtmlPage(html)
-    for el in page.select('body > div > *'):
+    xml_doc = lxml.html.fromstring(html)
+    xml_sel = lxml.cssselect.CSSSelector('body > div > *')
+    for el in xml_sel(xml_doc):
         text = el.text_content().strip()
         wordtext = cleanspace(text)
         lines.append(wordtext)
@@ -107,7 +94,7 @@ def preprocess(html):
             lines[lineno] = fixed_line
             continue
 
-        for headline in HEADLINES2:
+        for headline in HEADLINES:
             if line == headline:
                 log.debug('(%d) Found headline %r', lineno, line)
                 continue
@@ -220,7 +207,7 @@ for cls in [CcParser, HgParser, AdminActParser, BnrActParser]:
     ARTICLE_TYPE[cls.article_type['type']]['parser'] = cls
 
 
-def parse_tika(lines):
+def parse_mof(lines):
     articles = []
 
     document_part = 'start'
@@ -318,7 +305,3 @@ def parse_tika(lines):
                  len(articles) - len(body_article_queue), len(articles))
 
     return articles
-
-
-def cleanspace(text):
-    return re.sub(r'\s+', text.replace('\n', ' '), ' ').strip()

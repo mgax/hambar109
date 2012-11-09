@@ -2,7 +2,7 @@
 import unittest
 from datetime import date
 from path import path
-from mof_parser import preprocess, parse_tika
+from mof_parser import preprocess, parse_mof
 
 
 DATA = path(__file__).abspath().parent / 'data'
@@ -42,7 +42,7 @@ class TikaMofParserTest(unittest.TestCase):
     def setUp(self):
         self.raw = (DATA / 'mof1_2009_0174-tika.html').bytes()
         self.lines = preprocess(self.raw)
-        self.data = parse_tika(self.lines)
+        self.data = parse_mof(self.lines)
 
     def test_all_sections_found(self):
         sections = set(article['section'] for article in self.data)
