@@ -209,10 +209,11 @@ for cls in [CcParser, HgParser, AdminActParser, BnrActParser]:
 
 class MofParser(object):
 
-    def parse(self, lines):
+    def __init__(self, lines):
         self.lines = lines
-        self.articles = []
 
+    def parse(self):
+        self.articles = []
         self.document_part = 'start'
         self.article_lines = None
 
