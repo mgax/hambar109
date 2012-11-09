@@ -59,6 +59,8 @@ class TikaMofParserTest(unittest.TestCase):
                 u"și funcționarea Curții Constituționale"))
         self.assertIn((u"judiciare de timbru, precum și ale art. 29 alin. "
                        u"(6) din Legea nr. 47/1992"), cc_decision['title'])
+        self.assertEqual(cc_decision['headline'],
+                         u"Decizia nr. 258 din 24 februarie 2009")
 
     def test_hg_second_section_has_correct_title(self):
         hg_290 = self.data[2]
@@ -68,6 +70,7 @@ class TikaMofParserTest(unittest.TestCase):
         self.assertIn((u"încetarea exercitării funcției publice de "
                        u"subprefect al județului Alba"), hg_290['title'])
         self.assertEqual(hg_290['number'], '290')
+        self.assertEqual(hg_290['headline'], u"Hotărâre")
 
     def test_titles_end_with_no_page_number(self):
         cc_decision = self.data[0]

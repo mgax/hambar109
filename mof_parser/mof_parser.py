@@ -158,6 +158,7 @@ class SummaryParser(object):
             'number': match.group('number'),
             'section': self.article_type['type'],
             'title': title,
+            'headline': mgroups['type'],
         }
 
     def summary(self, lines):
@@ -193,19 +194,17 @@ class CcParser(SummaryParser):
 
     article_type = ARTICLE_TYPE['decizie-cc']
 
-    title_begin = re.compile(ur'^(?P<type>Decizia)'
-                                ur'(?P<title_start> nr. (?P<number>\d+) '
-                                ur'din (?P<date>\d{1,2} \w+ \d{4})\s+'
-                             ur'(?P<subtitle>.*))')
+    title_begin = re.compile(ur'^(?P<headline>(?P<type>Decizia)'
+                                ur' nr. (?P<number>\d+) '
+                                ur'din (?P<date>\d{1,2} \w+ \d{4}))\s+'
+                             ur'(?P<subtitle>.*)')
 
     def make_article(self, match):
-        mgroups = match.groupdict()
-        title = mgroups['type'] + mgroups['title_start']
         return {
-            #'number': match.group('number'),
             'section': self.article_type['type'],
-            'title': title,
+            'title': match.group(0),
             'subtitle': match.group('subtitle'),
+            'headline': match.group('headline'),
         }
 
 
