@@ -186,41 +186,29 @@ def stats():
 @search_pages.route('/stats_json')
 def stats_json():
     repo_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / 'MOF1'
-    data = available_files(repo_path)
-    return flask.jsonify(data)
+    tree = construct_tree(repo_path)
+    return flask.jsonify(tree)
+
+
+def construct_tree(fs_path):
+    def recursion(loc):
+        children = []
+        if loc.isdir():
+            for f in loc.files():
+                children.append({"name": f.name.upper(), "size": f.size})
+            for item in loc.dirs():
+                children += [recursion(item)]
+        return {"name": loc.name.upper(), "children": children}
+    return recursion(fs_path)
+
 
 def available_files(location):
-    files_list = {}
-    def recursion(location, files_list, lvl=1):
-        current_content = []
-        if lvl==1:
-            current_children = files_list
-        else:
-            for l in xrange(lvl+1):
-                current_children = files_list['children']
-        assert current_content==[]
-        import pdb; pdb.set_trace()
-        current_content['name'] = location.name.upper()
-        current_content['children'] = []
-        for item in location.listdir():
-            if item.isfile():
-                current_children['children'].update({
-                    'name': item.name.upper(),
-                    'size': item.size
-                })
-            elif item.isdir():
-                current_content['children'].update({
-                    'name': item.name.upper()
-                })
-        current_children['children'] = current_content
-        dirs = [d for d in location.listdir() if d.isdir()]
-        if not dirs:
-            lvl-=1
-        for d in dirs:
-            lvl+=1
-            recursion(d, current_children, lvl)
-    recursion(location, files_list)
-    return files_list
+    import os
+    files=[]
+    def walker(arg, dirname, names):
+        files.append(names)
+    os.path.walk(location, walker, '')
+    return files
 
 
 
