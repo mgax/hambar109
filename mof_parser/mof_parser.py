@@ -212,6 +212,12 @@ class MofParser(object):
     def __init__(self, lines):
         self.lines = lines
 
+    def line_before_summary(self):
+        if self.line == 'SUMAR':
+            self.document_part = 'summary'
+            self.summary_section_lines = []
+            self.summary_seen_sections = set()
+
     def parse(self):
         self.articles = []
         self.document_part = 'start'
@@ -224,11 +230,8 @@ class MofParser(object):
             self.line_nsl = nospacelower(self.line)
 
             if self.document_part == 'start':
-                if self.line == 'SUMAR':
-                    self.document_part = 'summary'
-                    self.summary_section_lines = []
-                    self.summary_seen_sections = set()
-                    continue
+                self.line_before_summary()
+                continue
 
             if self.document_part == 'summary':
                 if self.line_nsl in ARTICLE_TYPE_BY_HEADLINE:
