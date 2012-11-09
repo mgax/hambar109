@@ -240,6 +240,13 @@ class MofParser(object):
         self.summary_seen_sections.add(self.summary_section)
         log.debug("(%d) Summary section %r", self.lineno, self.summary_section)
 
+    def line_in_summary(self):
+        if self.line_nsl in ARTICLE_TYPE_BY_HEADLINE:
+            self.line_in_summary_is_headline()
+            return
+
+        self.summary_section_lines.append(self.line)
+
     def parse(self):
         self.articles = []
         self.document_part = 'start'
@@ -256,11 +263,7 @@ class MofParser(object):
                 continue
 
             if self.document_part == 'summary':
-                if self.line_nsl in ARTICLE_TYPE_BY_HEADLINE:
-                    self.line_in_summary_is_headline()
-                    continue
-
-                self.summary_section_lines.append(self.line)
+                self.line_in_summary()
                 continue
 
             if self.document_part == 'body':
