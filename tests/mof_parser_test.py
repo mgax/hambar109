@@ -8,6 +8,14 @@ from content.mof_parser import preprocess, MofParser
 DATA = path(__file__).abspath().parent / 'mof_parser_data'
 
 
+def count_articles_by_section(articles):
+    from collections import defaultdict
+    counts = defaultdict(int)
+    for article in articles:
+        counts[article['section']] += 1
+    return dict(counts)
+
+
 class ParserPreprocessorTest(unittest.TestCase):
 
     def setUp(self):
@@ -84,10 +92,7 @@ class TikaMofParserTest(unittest.TestCase):
                 u"24 februarie\u201423 martie 2009"))
 
     def test_article_counts_by_section_are_correct(self):
-        from collections import defaultdict
-        counts = defaultdict(int)
-        for article in self.data:
-            counts[article['section']] += 1
+        counts = count_articles_by_section(self.data)
         self.assertEqual(counts, {
             'decizie-cc': 1,
             'hotarare-guvern': 8,
@@ -107,3 +112,18 @@ class TikaMofParserTest(unittest.TestCase):
         bnr_act = self.data[10]
         self.assertIn(u"ratele dobânzilor plătite la rezervele minime",
                       bnr_act['body'])
+
+
+class MofParserTest_2010_0666(unittest.TestCase):
+
+    def setUp(self):
+        self.raw = (DATA / 'mof1_2010_0666.html').bytes()
+        self.data = MofParser(self.raw).parse()
+
+    def test_article_count(self):
+        counts = count_articles_by_section(self.data)
+        self.assertEqual(counts, {
+            'decret-presedinte': 10,
+            'hotarare-guvern': 1,
+            'act-admin-centrala': 12,
+        })

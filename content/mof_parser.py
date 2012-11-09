@@ -17,12 +17,17 @@ def cleanspace(text):
 
 ARTICLE_TYPES = [
 
+    {'type': 'decret-presedinte',
+     'group-headline': [u"DECRETE"],
+     'origin-headlines': [u"PREȘEDINTELE ROMÂNIEI"]},
+
     {'type': 'decizie-cc',
      'group-headline': [u"DECIZII ALE CURȚII CONSTITUȚIONALE"],
      'origin-headlines': [u"CURTEA CONSTITUȚIONALĂ"]},
 
     {'type': 'hotarare-guvern',
-     'group-headline': [u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI"],
+     'group-headline': [u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI",
+                        u"HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI"],
      'origin-headlines': [u"GUVERNUL ROMÂNIEI"]},
 
     {'type': 'act-admin-centrala',
@@ -118,10 +123,10 @@ def preprocess(html):
 
 class SummaryParser(object):
 
-    title_end = re.compile(ur'\s+(\.+\s+)?\d+(–\d+)?$')
+    title_end = re.compile(ur'(\.+\s+)?(\d+(–\d+)?)?$')
 
     def clean_title_end(self, raw_title):
-        return self.title_end.sub('', raw_title.strip())
+        return self.title_end.sub('', raw_title.strip()).strip()
 
     def make_article(self, match):
         mgroups = match.groupdict()
@@ -141,7 +146,7 @@ class SummaryParser(object):
             raw_title = self.clean_title_end(' '.join(current_title))
             begin_match = self.title_begin.match(raw_title)
             article = self.make_article(begin_match)
-            log.debug("Article from summary: %r", article)
+            log.debug("Article from summary: %r", article['title'])
             articles.append(article)
 
         for line in lines:
@@ -160,6 +165,15 @@ class SummaryParser(object):
         finish_title()
 
         return articles
+
+
+class DecretParser(SummaryParser):
+
+    article_type = ARTICLE_TYPE['decret-presedinte']
+
+    title_begin = re.compile(ur'^(?P<number>\d+). — '
+                             ur'(?P<type>Decret)'
+                             ur'(?P<title_start>\s+.*)')
 
 
 class CcParser(SummaryParser):
@@ -194,7 +208,7 @@ class AdminActParser(SummaryParser):
 
     article_type = ARTICLE_TYPE['act-admin-centrala']
 
-    title_begin = re.compile(ur'^(?P<number>\d+). — '
+    title_begin = re.compile(ur'^(?P<number>\S+). — '
                              ur'(?P<type>Ordin)'
                              ur'(?P<title_start>\s+.*)')
 
@@ -208,7 +222,7 @@ class BnrActParser(SummaryParser):
                              ur'(?P<title_start>\s+.*)')
 
 
-for cls in [CcParser, HgParser, AdminActParser, BnrActParser]:
+for cls in [DecretParser, CcParser, HgParser, AdminActParser, BnrActParser]:
     ARTICLE_TYPE[cls.article_type['type']]['parser'] = cls
 
 
