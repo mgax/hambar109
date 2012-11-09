@@ -250,7 +250,8 @@ class MofParser(object):
     def match_headline_in_body(self):
         is_match = False
         for n in range(1, 4):
-            concat = nospacelower(' '.join(self.lines[self.lineno:self.lineno+n]))
+            range_lines = self.lines[self.lineno:self.lineno+n]
+            concat = nospacelower(' '.join(range_lines))
             log.debug('Trying %d lines: %r', n, concat)
             if concat == self.next_headline:
                 log.debug("It's a match!")
@@ -325,6 +326,7 @@ class MofParser(object):
 
         if self.body_article_queue:
             log.warn("Only matched %d out of %d articles",
-                     len(self.articles) - len(self.body_article_queue), len(self.articles))
+                     len(self.articles) - len(self.body_article_queue),
+                     len(self.articles))
 
         return self.articles
