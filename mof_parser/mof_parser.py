@@ -164,19 +164,20 @@ class HgParser(CcParser):
 
     title_begin = re.compile(ur'^(?P<number>\d+). — '
                              ur'(?P<type>Ordonanță de urgență|'
-                                      ur'Hotărâre)')
+                                      ur'Hotărâre)'
+                             ur'(?P<title_start>\s+.*)$')
 
     def summary(self, lines):
         articles = []
         current_title = None
+        current_article = None
 
         def finish_title():
             title = self.clean_title_end(' '.join(current_title))
             log.debug("Title from summary: %r", title)
-            articles.append({
-                'section': self.article_type['type'],
-                'title': title,
-            })
+            current_article['section'] = self.article_type['type']
+            current_article['title'] = title
+            articles.append(current_article)
 
         for line in lines:
             begin_match = self.title_begin.match(line)
@@ -184,7 +185,11 @@ class HgParser(CcParser):
             if begin_match is not None:
                 if current_title is not None:
                     finish_title()
-                current_title = [line]
+                mgroups = begin_match.groupdict()
+                current_article = {
+                    'number': mgroups['number'],
+                }
+                current_title = [mgroups['type'] + mgroups['title_start']]
 
             else:
                 if current_title is None:
@@ -203,7 +208,8 @@ class AdminActParser(HgParser):
     article_type = ARTICLE_TYPE['act-admin-centrala']
 
     title_begin = re.compile(ur'^(?P<number>\d+). — '
-                             ur'(?P<type>Ordin al ministrului)')
+                             ur'(?P<type>Ordin al ministrului)'
+                             ur'(?P<title_start>\s+.*)$')
 
 
 class BnrActParser(HgParser):
@@ -211,7 +217,8 @@ class BnrActParser(HgParser):
     article_type = ARTICLE_TYPE['act-bnr']
 
     title_begin = re.compile(ur'^(?P<number>\d+). — '
-                             ur'(?P<type>Circulară)')
+                             ur'(?P<type>Circulară)'
+                             ur'(?P<title_start>\s+.*)$')
 
 
 for cls in [CcParser, HgParser, AdminActParser, BnrActParser]:

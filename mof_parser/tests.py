@@ -59,8 +59,11 @@ class TikaMofParserTest(unittest.TestCase):
     def test_hg_second_section_has_correct_title(self):
         hg_290 = self.data[2]
         self.assertEqual(hg_290['section'], 'hotarare-guvern')
+        self.assertTrue(hg_290['title'].startswith(
+                u"Hotărâre privind încetarea exercitării funcției"))
         self.assertIn((u"încetarea exercitării funcției publice de "
                        u"subprefect al județului Alba"), hg_290['title'])
+        self.assertEqual(hg_290['number'], '290')
 
     def test_titles_end_with_no_page_number(self):
         cc_decision = self.data[0]
