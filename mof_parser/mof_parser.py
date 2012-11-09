@@ -151,29 +151,31 @@ class SummaryParser(object):
     def clean_title_end(self, raw_title):
         return self.title_end.sub('', raw_title.strip())
 
+    def make_article(self, match):
+        mgroups = match.groupdict()
+        title = mgroups['type'] + mgroups['title_start']
+        return {
+            'number': match.group('number'),
+            'section': self.article_type['type'],
+            'title': title,
+        }
+
     def summary(self, lines):
         articles = []
         current_title = None
-        current_article = None
 
         def finish_title():
-            title = self.clean_title_end(' '.join(current_title))
-            log.debug("Title from summary: %r", title)
-            current_article['section'] = self.article_type['type']
-            current_article['title'] = title
-            articles.append(current_article)
+            raw_title = self.clean_title_end(' '.join(current_title))
+            begin_match = self.title_begin.match(raw_title)
+            article = self.make_article(begin_match)
+            log.debug("Article from summary: %r", article)
+            articles.append(article)
 
         for line in lines:
-            begin_match = self.title_begin.match(line)
-
-            if begin_match is not None:
+            if self.title_begin.match(line) is not None:
                 if current_title is not None:
                     finish_title()
-                mgroups = begin_match.groupdict()
-                current_article = {
-                    'number': mgroups['number'],
-                }
-                current_title = [mgroups['type'] + mgroups['title_start']]
+                current_title = [line]
 
             else:
                 if current_title is None:
@@ -194,7 +196,7 @@ class CcParser(SummaryParser):
     title_begin = re.compile(ur'^(?P<type>Decizia)'
                                 ur'(?P<title_start> nr. (?P<number>\d+) '
                                 ur'din (?P<date>\d{1,2} \w+ \d{4}) '
-                             ur'.*)$')
+                             ur'.*)')
 
 
 class HgParser(SummaryParser):
@@ -204,7 +206,7 @@ class HgParser(SummaryParser):
     title_begin = re.compile(ur'^(?P<number>\d+). — '
                              ur'(?P<type>Ordonanță de urgență|'
                                       ur'Hotărâre)'
-                             ur'(?P<title_start>\s+.*)$')
+                             ur'(?P<title_start>\s+.*)')
 
 
 class AdminActParser(SummaryParser):
@@ -213,7 +215,7 @@ class AdminActParser(SummaryParser):
 
     title_begin = re.compile(ur'^(?P<number>\d+). — '
                              ur'(?P<type>Ordin)'
-                             ur'(?P<title_start>\s+.*)$')
+                             ur'(?P<title_start>\s+.*)')
 
 
 class BnrActParser(SummaryParser):
@@ -222,7 +224,7 @@ class BnrActParser(SummaryParser):
 
     title_begin = re.compile(ur'^(?P<number>\d+). — '
                              ur'(?P<type>Circulară)'
-                             ur'(?P<title_start>\s+.*)$')
+                             ur'(?P<title_start>\s+.*)')
 
 
 for cls in [CcParser, HgParser, AdminActParser, BnrActParser]:
