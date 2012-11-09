@@ -104,6 +104,11 @@ class TikaMofParserTest(unittest.TestCase):
                       cc_decision['body'].replace('\n', ' '))
         #self.assertTrue(cc_decision['body'].startswith(u"Ioan Vida"))
 
+    def test_last_article_contains_text(self):
+        bnr_act = self.data[10]
+        self.assertIn(u"ratele dobânzilor plătite la rezervele minime",
+                      bnr_act['body'])
+
 
 class MofParserTest(unittest.TestCase):
 

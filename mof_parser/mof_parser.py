@@ -330,6 +330,9 @@ def parse_tika(lines):
             article_lines.append(line)
             continue
 
+    if article_lines:
+        current_article['body'] = '\n'.join(article_lines)
+
     if body_article_queue:
         log.warn("Only matched %d out of %d articles",
                  len(articles) - len(body_article_queue), len(articles))
