@@ -72,7 +72,7 @@ def preprocess(html):
         if not line:
             continue
 
-        if line == 'Nr. Pagina Nr. Pagina':
+        if line in ['Nr. Pagina Nr. Pagina', 'Nr. Pagina']:
             lines[lineno:lineno+1] = []
 
         if header is None:
