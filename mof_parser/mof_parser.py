@@ -247,6 +247,48 @@ class MofParser(object):
 
         self.summary_section_lines.append(self.line)
 
+    def line_in_body(self):
+        if self.line_nsl in ARTICLE_TYPE_BY_HEADLINE:
+            self.body_section = ARTICLE_TYPE_BY_HEADLINE[self.line_nsl]['type']
+            log.debug("(%d) beginning of body section %r",
+                      self.lineno, self.body_section)
+            return
+
+        origin_headlines = ARTICLE_TYPE[self.body_section]['origin-headlines']
+        if self.line_nsl in map(nospacelower, origin_headlines):
+            log.debug("(%d) origin headline %r", self.lineno, self.line)
+            return
+
+        if self.body_article_queue:
+            next_article = self.body_article_queue[0]
+            self.next_headline = nospacelower(next_article['headline'])
+
+        else:
+            next_article = 'NO SUCH HEADLINE'
+
+        if self.line and self.next_headline.startswith(self.line_nsl):
+            log.debug("(%d) possible title match %r %r",
+                      self.lineno, self.line, self.next_headline)
+
+            is_match = False
+            for n in range(1, 4):
+                concat = nospacelower(' '.join(self.lines[self.lineno:self.lineno+n]))
+                log.debug('Trying %d lines: %r', n, concat)
+                if concat == self.next_headline:
+                    log.debug("It's a match!")
+                    self.lineno += n-1
+                    is_match = True
+                    break
+
+            if is_match:
+                if self.article_lines:
+                    self.current_article['body'] = '\n'.join(self.article_lines)
+                self.article_lines = []
+                self.current_article = self.body_article_queue.pop(0)
+                return
+
+        self.article_lines.append(self.line)
+
     def parse(self):
         self.articles = []
         self.document_part = 'start'
@@ -267,50 +309,11 @@ class MofParser(object):
                 continue
 
             if self.document_part == 'body':
-                if self.line_nsl in ARTICLE_TYPE_BY_HEADLINE:
-                    self.body_section = ARTICLE_TYPE_BY_HEADLINE[self.line_nsl]['type']
-                    log.debug("(%d) beginning of body section %r",
-                              self.lineno, self.body_section)
-                    continue
-
-                origin_headlines = ARTICLE_TYPE[self.body_section]['origin-headlines']
-                if self.line_nsl in map(nospacelower, origin_headlines):
-                    log.debug("(%d) origin headline %r", self.lineno, self.line)
-                    continue
-
-                if self.body_article_queue:
-                    next_article = self.body_article_queue[0]
-                    next_headline = nospacelower(next_article['headline'])
-
-                else:
-                    next_article = 'NO SUCH HEADLINE'
-
-                if self.line and next_headline.startswith(self.line_nsl):
-                    log.debug("(%d) possible title match %r %r",
-                              self.lineno, self.line, next_headline)
-
-                    is_match = False
-                    for n in range(1, 4):
-                        concat = nospacelower(' '.join(self.lines[self.lineno:self.lineno+n]))
-                        log.debug('Trying %d lines: %r', n, concat)
-                        if concat == next_headline:
-                            log.debug("It's a match!")
-                            self.lineno += n-1
-                            is_match = True
-                            break
-
-                    if is_match:
-                        if self.article_lines:
-                            current_article['body'] = '\n'.join(self.article_lines)
-                        self.article_lines = []
-                        current_article = self.body_article_queue.pop(0)
-                        continue
-
-                self.article_lines.append(self.line)
+                self.line_in_body()
                 continue
 
         if self.article_lines:
-            current_article['body'] = '\n'.join(self.article_lines)
+            self.current_article['body'] = '\n'.join(self.article_lines)
 
         if self.body_article_queue:
             log.warn("Only matched %d out of %d articles",
