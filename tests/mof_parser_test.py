@@ -2,10 +2,10 @@
 import unittest
 from datetime import date
 from path import path
-from mof_parser import preprocess, MofParser
+from content.mof_parser import preprocess, MofParser
 
 
-DATA = path(__file__).abspath().parent / 'data'
+DATA = path(__file__).abspath().parent / 'mof_parser_data'
 
 
 class ParserPreprocessorTest(unittest.TestCase):
