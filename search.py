@@ -185,7 +185,7 @@ def stats():
 
 @search_pages.route('/stats_json')
 def stats_json():
-    repo_path = flask.current_app.config['PUBDOCS_FILE_REPO']
+    repo_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / 'MOF1'
     tree = construct_tree(repo_path)
     return flask.jsonify(tree)
 
