@@ -18,28 +18,30 @@ def cleanspace(text):
 ARTICLE_TYPES = [
 
     {'type': 'decizie-cc',
-     'group-headline': u"DECIZII ALE CURȚII CONSTITUȚIONALE",
+     'group-headline': [u"DECIZII ALE CURȚII CONSTITUȚIONALE"],
      'origin-headlines': [u"CURTEA CONSTITUȚIONALĂ"]},
 
     {'type': 'hotarare-guvern',
-     'group-headline': u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI",
+     'group-headline': [u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI"],
      'origin-headlines': [u"GUVERNUL ROMÂNIEI"]},
 
     {'type': 'act-admin-centrala',
-     'group-headline': (u"ACTE ALE ORGANELOR DE SPECIALITATE ALE "
-                        u"ADMINISTRAȚIEI PUBLICE CENTRALE"),
+     'group-headline': [(u"ACTE ALE ORGANELOR DE SPECIALITATE ALE "
+                         u"ADMINISTRAȚIEI PUBLICE CENTRALE")],
      'origin-headlines': [u"MINISTERUL FINANȚELOR PUBLICE"]},
 
     {'type': 'act-bnr',
-     'group-headline': u"ACTE ALE BĂNCII NAȚIONALE A ROMÂNIEI",
+     'group-headline': [u"ACTE ALE BĂNCII NAȚIONALE A ROMÂNIEI"],
      'origin-headlines': [u"BANCA NAȚIONALĂ A ROMÂNIEI"]},
 
 ]
 
 ARTICLE_TYPE = {t['type']: t for t in ARTICLE_TYPES}
 
-ARTICLE_TYPE_BY_HEADLINE = {nospacelower(t['group-headline']): t
-                            for t in ARTICLE_TYPES}
+ARTICLE_TYPE_BY_HEADLINE = {}
+for _article_type in ARTICLE_TYPES:
+    for _headline in _article_type['group-headline']:
+        ARTICLE_TYPE_BY_HEADLINE[nospacelower(_headline)] = _article_type
 
 
 spaced_headline = re.compile(r'\b(\w\s){2,}\w\b', re.UNICODE)
@@ -47,7 +49,8 @@ multispace = re.compile(r'\s+')
 
 
 def preprocess(html):
-    HEADLINES = [t['group-headline'] for t in ARTICLE_TYPES]
+    HEADLINES = [h for t in ARTICLE_TYPES
+                   for h in t['group-headline']]
 
     lines = []
     xml_doc = lxml.html.fromstring(html)
