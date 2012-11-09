@@ -299,18 +299,22 @@ def parse_tika(lines):
                 log.debug("(%d) origin headline %r", lineno, line)
                 continue
 
-            next_article = body_article_queue[0]
-            next_title = nospacelower(next_article['title'])
+            if body_article_queue:
+                next_article = body_article_queue[0]
+                next_headline = nospacelower(next_article['headline'])
 
-            if line and next_title.startswith(line_nsl):
+            else:
+                next_article = 'NO SUCH HEADLINE'
+
+            if line and next_headline.startswith(line_nsl):
                 log.debug("(%d) possible title match %r %r",
-                          lineno, line, next_title)
+                          lineno, line, next_headline)
 
                 is_match = False
-                for n in range(2, 10):
+                for n in range(1, 4):
                     concat = nospacelower(' '.join(lines[lineno:lineno+n]))
                     log.debug('Trying %d lines: %r', n, concat)
-                    if concat == next_title:
+                    if concat == next_headline:
                         log.debug("It's a match!")
                         lineno += n-1
                         is_match = True
