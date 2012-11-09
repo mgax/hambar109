@@ -209,8 +209,8 @@ for cls in [CcParser, HgParser, AdminActParser, BnrActParser]:
 
 class MofParser(object):
 
-    def __init__(self, lines):
-        self.lines = lines
+    def __init__(self, html):
+        self.lines = preprocess(html)
 
     def line_before_summary(self):
         if self.line == 'SUMAR':

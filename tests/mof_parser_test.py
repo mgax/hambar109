@@ -41,8 +41,7 @@ class TikaMofParserTest(unittest.TestCase):
 
     def setUp(self):
         self.raw = (DATA / 'mof1_2009_0174-tika.html').bytes()
-        self.lines = preprocess(self.raw)
-        self.data = MofParser(self.lines).parse()
+        self.data = MofParser(self.raw).parse()
 
     def test_all_sections_found(self):
         sections = set(article['section'] for article in self.data)
