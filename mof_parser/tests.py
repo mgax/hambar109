@@ -53,6 +53,10 @@ class TikaMofParserTest(unittest.TestCase):
         cc_decision = self.data[0]
         self.assertTrue(cc_decision['title'].startswith(
                             u"Decizia nr. 258 din 24 februarie 2009"))
+        self.assertTrue(cc_decision['subtitle'].startswith(
+                u"referitoare la excepția de neconstituționalitate"))
+        self.assertTrue(cc_decision['subtitle'].endswith(
+                u"și funcționarea Curții Constituționale"))
         self.assertIn((u"judiciare de timbru, precum și ale art. 29 alin. "
                        u"(6) din Legea nr. 47/1992"), cc_decision['title'])
 

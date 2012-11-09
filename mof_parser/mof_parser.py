@@ -195,8 +195,18 @@ class CcParser(SummaryParser):
 
     title_begin = re.compile(ur'^(?P<type>Decizia)'
                                 ur'(?P<title_start> nr. (?P<number>\d+) '
-                                ur'din (?P<date>\d{1,2} \w+ \d{4}) '
-                             ur'.*)')
+                                ur'din (?P<date>\d{1,2} \w+ \d{4})\s+'
+                             ur'(?P<subtitle>.*))')
+
+    def make_article(self, match):
+        mgroups = match.groupdict()
+        title = mgroups['type'] + mgroups['title_start']
+        return {
+            #'number': match.group('number'),
+            'section': self.article_type['type'],
+            'title': title,
+            'subtitle': match.group('subtitle'),
+        }
 
 
 class HgParser(SummaryParser):
