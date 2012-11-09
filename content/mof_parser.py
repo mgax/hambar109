@@ -57,8 +57,10 @@ def preprocess(html):
     xml_sel = lxml.cssselect.CSSSelector('body > div > *')
     for el in xml_sel(xml_doc):
         text = el.text_content().strip()
-        wordtext = cleanspace(text)
-        lines.append(wordtext)
+        for subline in text.splitlines():
+            wordtext = cleanspace(subline)
+            if wordtext:
+                lines.append(wordtext)
 
     header = None
 
