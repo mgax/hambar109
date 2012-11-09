@@ -144,32 +144,12 @@ def preprocess(html):
     return lines
 
 
-class CcParser(object):
-
-    article_type = ARTICLE_TYPE['decizie-cc']
+class SummaryParser(object):
 
     title_end = re.compile(ur'\s+(\.+\s+)?\d+(–\d+)?$')
 
     def clean_title_end(self, raw_title):
         return self.title_end.sub('', raw_title.strip())
-
-    def summary(self, lines):
-        title = self.clean_title_end(' '.join(lines))
-        log.debug("Title from summary: %r", title)
-        return [{
-            'section': self.article_type['type'],
-            'title': title,
-        }]
-
-
-class HgParser(CcParser):
-
-    article_type = ARTICLE_TYPE['hotarare-guvern']
-
-    title_begin = re.compile(ur'^(?P<number>\d+). — '
-                             ur'(?P<type>Ordonanță de urgență|'
-                                      ur'Hotărâre)'
-                             ur'(?P<title_start>\s+.*)$')
 
     def summary(self, lines):
         articles = []
@@ -207,7 +187,27 @@ class HgParser(CcParser):
         return articles
 
 
-class AdminActParser(HgParser):
+class CcParser(SummaryParser):
+
+    article_type = ARTICLE_TYPE['decizie-cc']
+
+    title_begin = re.compile(ur'^(?P<type>Decizia)'
+                                ur'(?P<title_start> nr. (?P<number>\d+) '
+                                ur'din (?P<date>\d{1,2} \w+ \d{4}) '
+                             ur'.*)$')
+
+
+class HgParser(SummaryParser):
+
+    article_type = ARTICLE_TYPE['hotarare-guvern']
+
+    title_begin = re.compile(ur'^(?P<number>\d+). — '
+                             ur'(?P<type>Ordonanță de urgență|'
+                                      ur'Hotărâre)'
+                             ur'(?P<title_start>\s+.*)$')
+
+
+class AdminActParser(SummaryParser):
 
     article_type = ARTICLE_TYPE['act-admin-centrala']
 
@@ -216,7 +216,7 @@ class AdminActParser(HgParser):
                              ur'(?P<title_start>\s+.*)$')
 
 
-class BnrActParser(HgParser):
+class BnrActParser(SummaryParser):
 
     article_type = ARTICLE_TYPE['act-bnr']
 
