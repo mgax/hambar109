@@ -1,6 +1,9 @@
 import os
 import logging
 from path import path
+from .tika import invoke_tika
+from .mof_parser import MofParser
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -26,6 +29,12 @@ def find_mof(name):
 
 def import_mof_pdf(pdf_path):
     log.info("Importing pdf %s", pdf_path)
+
+    with pdf_path.open('rb') as pdf_file:
+        html = ''.join(invoke_tika(pdf_file))
+
+    articles = MofParser(html).parse()
+    log.info("%d articles found", len(articles))
 
 
 def register_commands(manager):
