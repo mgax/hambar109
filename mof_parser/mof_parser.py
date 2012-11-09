@@ -218,6 +218,28 @@ class MofParser(object):
             self.summary_section_lines = []
             self.summary_seen_sections = set()
 
+    def line_in_summary_is_headline(self):
+        if self.summary_section_lines:
+            log.debug("(%d) finishing up summary section %r",
+                      self.lineno, self.summary_section)
+            parser = ARTICLE_TYPE[self.summary_section]['parser']()
+            self.articles.extend(parser.summary(self.summary_section_lines))
+            self.summary_section_lines[:] = []
+
+        self.article_type = ARTICLE_TYPE_BY_HEADLINE[self.line_nsl]
+        self.summary_section = self.article_type['type']
+
+        if self.summary_section in self.summary_seen_sections:
+            log.debug("(%d) Summary over, found section %r again",
+                      self.lineno, self.summary_section)
+            self.document_part = 'body'
+            self.body_article_queue = list(self.articles)
+            self.lineno -= 1
+            return
+
+        self.summary_seen_sections.add(self.summary_section)
+        log.debug("(%d) Summary section %r", self.lineno, self.summary_section)
+
     def parse(self):
         self.articles = []
         self.document_part = 'start'
@@ -235,27 +257,7 @@ class MofParser(object):
 
             if self.document_part == 'summary':
                 if self.line_nsl in ARTICLE_TYPE_BY_HEADLINE:
-
-                    if self.summary_section_lines:
-                        log.debug("(%d) finishing up summary section %r",
-                                  self.lineno, self.summary_section)
-                        parser = ARTICLE_TYPE[self.summary_section]['parser']()
-                        self.articles.extend(parser.summary(self.summary_section_lines))
-                        self.summary_section_lines[:] = []
-
-                    self.article_type = ARTICLE_TYPE_BY_HEADLINE[self.line_nsl]
-                    self.summary_section = self.article_type['type']
-
-                    if self.summary_section in self.summary_seen_sections:
-                        log.debug("(%d) Summary over, found section %r again",
-                                  self.lineno, self.summary_section)
-                        self.document_part = 'body'
-                        body_article_queue = list(self.articles)
-                        self.lineno -= 1
-                        continue
-
-                    self.summary_seen_sections.add(self.summary_section)
-                    log.debug("(%d) Summary section %r", self.lineno, self.summary_section)
+                    self.line_in_summary_is_headline()
                     continue
 
                 self.summary_section_lines.append(self.line)
@@ -273,8 +275,8 @@ class MofParser(object):
                     log.debug("(%d) origin headline %r", self.lineno, self.line)
                     continue
 
-                if body_article_queue:
-                    next_article = body_article_queue[0]
+                if self.body_article_queue:
+                    next_article = self.body_article_queue[0]
                     next_headline = nospacelower(next_article['headline'])
 
                 else:
@@ -298,7 +300,7 @@ class MofParser(object):
                         if self.article_lines:
                             current_article['body'] = '\n'.join(self.article_lines)
                         self.article_lines = []
-                        current_article = body_article_queue.pop(0)
+                        current_article = self.body_article_queue.pop(0)
                         continue
 
                 self.article_lines.append(self.line)
@@ -307,8 +309,8 @@ class MofParser(object):
         if self.article_lines:
             current_article['body'] = '\n'.join(self.article_lines)
 
-        if body_article_queue:
+        if self.body_article_queue:
             log.warn("Only matched %d out of %d articles",
-                     len(self.articles) - len(body_article_queue), len(self.articles))
+                     len(self.articles) - len(self.body_article_queue), len(self.articles))
 
         return self.articles
