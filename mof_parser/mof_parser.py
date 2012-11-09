@@ -212,7 +212,7 @@ class AdminActParser(SummaryParser):
     article_type = ARTICLE_TYPE['act-admin-centrala']
 
     title_begin = re.compile(ur'^(?P<number>\d+). — '
-                             ur'(?P<type>Ordin al ministrului)'
+                             ur'(?P<type>Ordin)'
                              ur'(?P<title_start>\s+.*)$')
 
 
