@@ -247,6 +247,25 @@ class MofParser(object):
 
         self.summary_section_lines.append(self.line)
 
+    def match_headline_in_body(self):
+        is_match = False
+        for n in range(1, 4):
+            concat = nospacelower(' '.join(self.lines[self.lineno:self.lineno+n]))
+            log.debug('Trying %d lines: %r', n, concat)
+            if concat == self.next_headline:
+                log.debug("It's a match!")
+                self.lineno += n-1
+                break
+
+        else:
+            return False
+
+        if self.article_lines:
+            self.body_article_finish()
+        self.article_lines = []
+        self.current_article = self.body_article_queue.pop(0)
+        return True
+
     def line_in_body(self):
         if self.line_nsl in ARTICLE_TYPE_BY_HEADLINE:
             self.body_section = ARTICLE_TYPE_BY_HEADLINE[self.line_nsl]['type']
@@ -270,21 +289,7 @@ class MofParser(object):
             log.debug("(%d) possible title match %r %r",
                       self.lineno, self.line, self.next_headline)
 
-            is_match = False
-            for n in range(1, 4):
-                concat = nospacelower(' '.join(self.lines[self.lineno:self.lineno+n]))
-                log.debug('Trying %d lines: %r', n, concat)
-                if concat == self.next_headline:
-                    log.debug("It's a match!")
-                    self.lineno += n-1
-                    is_match = True
-                    break
-
-            if is_match:
-                if self.article_lines:
-                    self.body_article_finish()
-                self.article_lines = []
-                self.current_article = self.body_article_queue.pop(0)
+            if self.match_headline_in_body():
                 return
 
         self.article_lines.append(self.line)
