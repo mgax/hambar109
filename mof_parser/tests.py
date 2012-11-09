@@ -22,12 +22,14 @@ class ParserPreprocessorTest(unittest.TestCase):
         self.assertFalse(any(line == '10' for line in self.lines))
 
     def test_headlines(self):
-        self.assertIn(u"DECIZII ALE CURȚII CONSTITUȚIONALE", self.lines)
-        self.assertIn(u"SUMAR", self.lines)
+        summary_lines = self.lines[:50]
+        self.assertIn(u"DECIZII ALE CURȚII CONSTITUȚIONALE", summary_lines)
+        self.assertIn(u"SUMAR", summary_lines)
         self.assertIn(u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI",
-                      self.lines)
+                      summary_lines)
         self.assertIn(u"ACTE ALE ORGANELOR DE SPECIALITATE ALE "
-                      u"ADMINISTRAȚIEI PUBLICE CENTRALE", self.lines)
+                      u"ADMINISTRAȚIEI PUBLICE CENTRALE", summary_lines)
+
         self.assertFalse(any(line.startswith(u"C U R T E A  C O N")
                              for line in self.lines))
         self.assertFalse(any(line.startswith(u"D E C I Z I I  A L E")
