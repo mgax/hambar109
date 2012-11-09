@@ -59,14 +59,13 @@ def index(file_path, debug=False):
     from harvest import build_fs_path
     es_url = flask.current_app.config['PUBDOCS_ES_URL']
     repo = flask.current_app.config['PUBDOCS_FILE_REPO'] / ''
-    tika_port = int(flask.current_app.config['PUBDOCS_TIKA_PORT'])
 
     (section, year, name) = file_path.replace(repo, "").split('/')
     fs_path = build_fs_path(file_path)
     with NamedTempFile(mode='w+b', delete=True) as temp:
         try:
             with open(fs_path, 'rb') as pdf_file:
-                for chunk in invoke_tika(pdf_file, port=tika_port):
+                for chunk in invoke_tika(pdf_file):
                     temp.write(chunk)
                 temp.seek(0)
 

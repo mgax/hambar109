@@ -1,7 +1,11 @@
+import os
 import socket
 
 
-def invoke_tika(data_file, host='127.0.0.1', port=9999, buffer_size=16384):
+def invoke_tika(data_file, buffer_size=16384):
+    host = '127.0.0.1'
+    port = int(os.environ['PUBDOCS_TIKA_PORT'])
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((host, port))
     while True:
