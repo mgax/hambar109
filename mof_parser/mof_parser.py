@@ -8,6 +8,10 @@ import lxml.html, lxml.cssselect
 log = logging.getLogger(__name__)
 
 
+def nospacelower(text):
+    return text.replace(' ', '').lower()
+
+
 MONTH = {
     'martie': 3,
 }
@@ -40,7 +44,8 @@ ARTICLE_TYPES = [
 
 ARTICLE_TYPE = {t['type']: t for t in ARTICLE_TYPES}
 
-ARTICLE_TYPE_BY_HEADLINE = {t['group-headline']: t for t in ARTICLE_TYPES}
+ARTICLE_TYPE_BY_HEADLINE = {nospacelower(t['group-headline']): t
+                            for t in ARTICLE_TYPES}
 
 
 HEADLINES2 = [t['group-headline'] for t in ARTICLE_TYPES]
@@ -222,6 +227,7 @@ def parse_tika(lines):
     while lineno < len(lines) - 1:
         lineno += 1
         line = lines[lineno]
+        line_nsl = nospacelower(line)
 
         if document_part == 'start':
             if line == 'SUMAR':
@@ -231,7 +237,7 @@ def parse_tika(lines):
                 continue
 
         if document_part == 'summary':
-            if line in HEADLINES2:
+            if line_nsl in ARTICLE_TYPE_BY_HEADLINE:
 
                 if summary_section_lines:
                     log.debug("(%d) finishing up summary section %r",
@@ -240,7 +246,7 @@ def parse_tika(lines):
                     articles.extend(parser.summary(summary_section_lines))
                     summary_section_lines[:] = []
 
-                article_type = ARTICLE_TYPE_BY_HEADLINE[line]
+                article_type = ARTICLE_TYPE_BY_HEADLINE[line_nsl]
                 summary_section = article_type['type']
 
                 if summary_section in summary_seen_sections:
