@@ -28,17 +28,21 @@ HEADLINES = [
 ARTICLE_TYPES = [
 
     {'type': 'decizie-cc',
-     'group-headline': u"DECIZII ALE CURȚII CONSTITUȚIONALE"},
+     'group-headline': u"DECIZII ALE CURȚII CONSTITUȚIONALE",
+     'origin-headlines': [u"CURTEA CONSTITUȚIONALĂ"]},
 
     {'type': 'hotarare-guvern',
-     'group-headline': u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI"},
+     'group-headline': u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI",
+     'origin-headlines': [u"GUVERNUL ROMÂNIEI"]},
 
     {'type': 'act-admin-centrala',
      'group-headline': (u"ACTE ALE ORGANELOR DE SPECIALITATE ALE "
-                        u"ADMINISTRAȚIEI PUBLICE CENTRALE")},
+                        u"ADMINISTRAȚIEI PUBLICE CENTRALE"),
+     'origin-headlines': [u"MINISTERUL FINANȚELOR PUBLICE"]},
 
     {'type': 'act-bnr',
-     'group-headline': u"ACTE ALE BĂNCII NAȚIONALE A ROMÂNIEI"},
+     'group-headline': u"ACTE ALE BĂNCII NAȚIONALE A ROMÂNIEI",
+     'origin-headlines': [u"BANCA NAȚIONALĂ A ROMÂNIEI"]},
 
 ]
 
@@ -229,6 +233,7 @@ def parse_tika(lines):
     articles = []
 
     document_part = 'start'
+    article_lines = None
 
     lineno = -1
     while lineno < len(lines) - 1:
@@ -260,6 +265,7 @@ def parse_tika(lines):
                     log.debug("(%d) Summary over, found section %r again",
                               lineno, summary_section)
                     document_part = 'body'
+                    body_article_queue = list(articles)
                     lineno -= 1
                     continue
 
@@ -269,6 +275,49 @@ def parse_tika(lines):
 
             summary_section_lines.append(line)
             continue
+
+        if document_part == 'body':
+            if line_nsl in ARTICLE_TYPE_BY_HEADLINE:
+                body_section = ARTICLE_TYPE_BY_HEADLINE[line_nsl]['type']
+                log.debug("(%d) beginning of body section %r",
+                          lineno, body_section)
+                continue
+
+            origin_headlines = ARTICLE_TYPE[body_section]['origin-headlines']
+            if line_nsl in map(nospacelower, origin_headlines):
+                log.debug("(%d) origin headline %r", lineno, line)
+                continue
+
+            next_article = body_article_queue[0]
+            next_title = nospacelower(next_article['title'])
+
+            if line and next_title.startswith(line_nsl):
+                log.debug("(%d) possible title match %r %r",
+                          lineno, line, next_title)
+
+                is_match = False
+                for n in range(2, 10):
+                    concat = nospacelower(' '.join(lines[lineno:lineno+n]))
+                    log.debug('Trying %d lines: %r', n, concat)
+                    if concat == next_title:
+                        log.debug("It's a match!")
+                        lineno += n-1
+                        is_match = True
+                        break
+
+                if is_match:
+                    if article_lines:
+                        current_article['body'] = '\n'.join(article_lines)
+                    article_lines = []
+                    current_article = body_article_queue.pop(0)
+                    continue
+
+            article_lines.append(line)
+            continue
+
+    if body_article_queue:
+        log.warn("Only matched %d out of %d articles",
+                 len(articles) - len(body_article_queue), len(articles))
 
     return articles
 

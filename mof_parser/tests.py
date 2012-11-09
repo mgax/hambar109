@@ -89,6 +89,14 @@ class TikaMofParserTest(unittest.TestCase):
             'act-bnr': 1,
         })
 
+    def test_cc_article_body_contains_text(self):
+        cc_decision = self.data[0]
+        self.assertIn(u"Pe rol se află soluționarea excepției de "
+                      u"neconstituționalitate a dispozițiilor art. 2 și "
+                      u"art. 20 din Legea nr. 146/1997",
+                      cc_decision['body'].replace('\n', ' '))
+        self.assertTrue(cc_decision['body'].startswith(u"Ioan Vida"))
+
 
 class MofParserTest(unittest.TestCase):
 
