@@ -210,62 +210,63 @@ for cls in [CcParser, HgParser, AdminActParser, BnrActParser]:
 class MofParser(object):
 
     def parse(self, lines):
-        articles = []
+        self.lines = lines
+        self.articles = []
 
-        document_part = 'start'
-        article_lines = None
+        self.document_part = 'start'
+        self.article_lines = None
 
-        lineno = -1
-        while lineno < len(lines) - 1:
-            lineno += 1
-            line = lines[lineno]
-            line_nsl = nospacelower(line)
+        self.lineno = -1
+        while self.lineno < len(self.lines) - 1:
+            self.lineno += 1
+            self.line = self.lines[self.lineno]
+            self.line_nsl = nospacelower(self.line)
 
-            if document_part == 'start':
-                if line == 'SUMAR':
-                    document_part = 'summary'
-                    summary_section_lines = []
-                    summary_seen_sections = set()
+            if self.document_part == 'start':
+                if self.line == 'SUMAR':
+                    self.document_part = 'summary'
+                    self.summary_section_lines = []
+                    self.summary_seen_sections = set()
                     continue
 
-            if document_part == 'summary':
-                if line_nsl in ARTICLE_TYPE_BY_HEADLINE:
+            if self.document_part == 'summary':
+                if self.line_nsl in ARTICLE_TYPE_BY_HEADLINE:
 
-                    if summary_section_lines:
+                    if self.summary_section_lines:
                         log.debug("(%d) finishing up summary section %r",
-                                  lineno, summary_section)
-                        parser = ARTICLE_TYPE[summary_section]['parser']()
-                        articles.extend(parser.summary(summary_section_lines))
-                        summary_section_lines[:] = []
+                                  self.lineno, self.summary_section)
+                        parser = ARTICLE_TYPE[self.summary_section]['parser']()
+                        self.articles.extend(parser.summary(self.summary_section_lines))
+                        self.summary_section_lines[:] = []
 
-                    article_type = ARTICLE_TYPE_BY_HEADLINE[line_nsl]
-                    summary_section = article_type['type']
+                    self.article_type = ARTICLE_TYPE_BY_HEADLINE[self.line_nsl]
+                    self.summary_section = self.article_type['type']
 
-                    if summary_section in summary_seen_sections:
+                    if self.summary_section in self.summary_seen_sections:
                         log.debug("(%d) Summary over, found section %r again",
-                                  lineno, summary_section)
-                        document_part = 'body'
-                        body_article_queue = list(articles)
-                        lineno -= 1
+                                  self.lineno, self.summary_section)
+                        self.document_part = 'body'
+                        body_article_queue = list(self.articles)
+                        self.lineno -= 1
                         continue
 
-                    summary_seen_sections.add(summary_section)
-                    log.debug("(%d) Summary section %r", lineno, summary_section)
+                    self.summary_seen_sections.add(self.summary_section)
+                    log.debug("(%d) Summary section %r", self.lineno, self.summary_section)
                     continue
 
-                summary_section_lines.append(line)
+                self.summary_section_lines.append(self.line)
                 continue
 
-            if document_part == 'body':
-                if line_nsl in ARTICLE_TYPE_BY_HEADLINE:
-                    body_section = ARTICLE_TYPE_BY_HEADLINE[line_nsl]['type']
+            if self.document_part == 'body':
+                if self.line_nsl in ARTICLE_TYPE_BY_HEADLINE:
+                    self.body_section = ARTICLE_TYPE_BY_HEADLINE[self.line_nsl]['type']
                     log.debug("(%d) beginning of body section %r",
-                              lineno, body_section)
+                              self.lineno, self.body_section)
                     continue
 
-                origin_headlines = ARTICLE_TYPE[body_section]['origin-headlines']
-                if line_nsl in map(nospacelower, origin_headlines):
-                    log.debug("(%d) origin headline %r", lineno, line)
+                origin_headlines = ARTICLE_TYPE[self.body_section]['origin-headlines']
+                if self.line_nsl in map(nospacelower, origin_headlines):
+                    log.debug("(%d) origin headline %r", self.lineno, self.line)
                     continue
 
                 if body_article_queue:
@@ -275,35 +276,35 @@ class MofParser(object):
                 else:
                     next_article = 'NO SUCH HEADLINE'
 
-                if line and next_headline.startswith(line_nsl):
+                if self.line and next_headline.startswith(self.line_nsl):
                     log.debug("(%d) possible title match %r %r",
-                              lineno, line, next_headline)
+                              self.lineno, self.line, next_headline)
 
                     is_match = False
                     for n in range(1, 4):
-                        concat = nospacelower(' '.join(lines[lineno:lineno+n]))
+                        concat = nospacelower(' '.join(self.lines[self.lineno:self.lineno+n]))
                         log.debug('Trying %d lines: %r', n, concat)
                         if concat == next_headline:
                             log.debug("It's a match!")
-                            lineno += n-1
+                            self.lineno += n-1
                             is_match = True
                             break
 
                     if is_match:
-                        if article_lines:
-                            current_article['body'] = '\n'.join(article_lines)
-                        article_lines = []
+                        if self.article_lines:
+                            current_article['body'] = '\n'.join(self.article_lines)
+                        self.article_lines = []
                         current_article = body_article_queue.pop(0)
                         continue
 
-                article_lines.append(line)
+                self.article_lines.append(self.line)
                 continue
 
-        if article_lines:
-            current_article['body'] = '\n'.join(article_lines)
+        if self.article_lines:
+            current_article['body'] = '\n'.join(self.article_lines)
 
         if body_article_queue:
             log.warn("Only matched %d out of %d articles",
-                     len(articles) - len(body_article_queue), len(articles))
+                     len(self.articles) - len(body_article_queue), len(self.articles))
 
-        return articles
+        return self.articles
