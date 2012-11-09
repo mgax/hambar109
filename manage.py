@@ -7,6 +7,7 @@ from flask.ext.script import Manager
 import requests
 import harvest
 import search
+from content import mof_import
 
 
 def create_app():
@@ -36,6 +37,7 @@ manager = Manager(create_app)
 
 harvest.register_commands(manager)
 search.register_commands(manager)
+mof_import.register_commands(manager)
 
 
 @manager.option('-p', '--port')
