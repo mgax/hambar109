@@ -282,12 +282,15 @@ class MofParser(object):
 
             if is_match:
                 if self.article_lines:
-                    self.current_article['body'] = '\n'.join(self.article_lines)
+                    self.body_article_finish()
                 self.article_lines = []
                 self.current_article = self.body_article_queue.pop(0)
                 return
 
         self.article_lines.append(self.line)
+
+    def body_article_finish(self):
+        self.current_article['body'] = '\n'.join(self.article_lines)
 
     def parse(self):
         self.articles = []
@@ -313,7 +316,7 @@ class MofParser(object):
                 continue
 
         if self.article_lines:
-            self.current_article['body'] = '\n'.join(self.article_lines)
+            self.body_article_finish()
 
         if self.body_article_queue:
             log.warn("Only matched %d out of %d articles",
