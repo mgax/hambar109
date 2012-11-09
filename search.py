@@ -5,6 +5,7 @@ import requests
 import re
 import os
 import sys
+import json
 import subprocess
 import logging
 import socket
@@ -178,6 +179,54 @@ def search():
         'next_url': next_url,
     })
 
+@search_pages.route('/stats')
+def stats():
+    return flask.render_template('stats.html')
+
+@search_pages.route('/stats_json')
+def stats_json():
+    repo_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / 'MOF1'
+    data = available_files(repo_path)
+    return flask.jsonify(data)
+
+def available_files(location):
+    files_list = {}
+    def recursion(location, files_list, lvl=1):
+        current_content = []
+        if lvl==1:
+            current_children = files_list
+        else:
+            for l in xrange(lvl+1):
+                current_children = files_list['children']
+        assert current_content==[]
+        import pdb; pdb.set_trace()
+        current_content['name'] = location.name.upper()
+        current_content['children'] = []
+        for item in location.listdir():
+            if item.isfile():
+                current_children['children'].update({
+                    'name': item.name.upper(),
+                    'size': item.size
+                })
+            elif item.isdir():
+                current_content['children'].update({
+                    'name': item.name.upper()
+                })
+        current_children['children'] = current_content
+        dirs = [d for d in location.listdir() if d.isdir()]
+        if not dirs:
+            lvl-=1
+        for d in dirs:
+            lvl+=1
+            recursion(d, current_children, lvl)
+    recursion(location, files_list)
+    return files_list
+
+
+
+def _load_json(name):
+    with open(os.path.join(os.path.dirname(__file__), name), "rb") as f:
+        return json.load(f)
 
 def register_commands(manager):
 
