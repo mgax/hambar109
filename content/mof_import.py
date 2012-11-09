@@ -1,6 +1,7 @@
 import os
 import logging
 from path import path
+import simplejson as json
 from .tika import invoke_tika
 from .mof_parser import MofParser
 
@@ -35,6 +36,7 @@ def import_mof_pdf(pdf_path):
 
     articles = MofParser(html).parse()
     log.info("%d articles found", len(articles))
+    print json.dumps(articles, indent=2, sort_keys=True)
 
 
 def register_commands(manager):
