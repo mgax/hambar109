@@ -28,19 +28,23 @@ def find_mof(name):
         raise KeyError("Can't find MOF %r" % name)
 
 
-def import_mof_pdf(pdf_path):
-    log.info("Importing pdf %s", pdf_path)
-
-    with pdf_path.open('rb') as pdf_file:
-        html = ''.join(invoke_tika(pdf_file))
-
-    articles = MofParser(html).parse()
-    log.info("%d articles found", len(articles))
-    print json.dumps(articles, indent=2, sort_keys=True)
-
-
 def register_commands(manager):
 
-    @manager.command
-    def mof_import(name):
-        import_mof_pdf(find_mof(name))
+    @manager.option('-r', '--raw-html', action='store_true',
+                    help="Print unparsed HTML")
+    @manager.option('name', help="Name of document to be loaded")
+    def mof_import(name, raw_html=False):
+        pdf_path = find_mof(name)
+
+        log.info("Importing pdf %s", pdf_path)
+
+        with pdf_path.open('rb') as pdf_file:
+            html = ''.join(invoke_tika(pdf_file))
+
+        if raw_html:
+            print html
+            return
+
+        articles = MofParser(html).parse()
+        log.info("%d articles found", len(articles))
+        print json.dumps(articles, indent=2, sort_keys=True)
