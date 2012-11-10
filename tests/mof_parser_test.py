@@ -126,3 +126,18 @@ class MofParserTest_2010_0666(unittest.TestCase):
             'hg': 1,
             'adm': 12,
         })
+
+
+class MofParserTest_2009_0177(unittest.TestCase):
+
+    def setUp(self):
+        self.raw = (DATA / 'mof1_2009_0177.html').bytes()
+        self.data = MofParser(self.raw).parse()
+
+    def test_article_count(self):
+        counts = count_articles_by_section(self.data)
+        self.assertEqual(counts, {
+            'cc': 3,
+            'adm': 3,
+            'iccj': 2,
+        })

@@ -39,6 +39,10 @@ ARTICLE_TYPES = [
      'group-headline': [u"ACTE ALE BĂNCII NAȚIONALE A ROMÂNIEI"],
      'origin-headlines': [u"BANCA NAȚIONALĂ A ROMÂNIEI"]},
 
+    {'type': 'iccj',
+     'group-headline': [u"ACTE ALE ÎNALTEI CURȚI DE CASAȚIE ȘI JUSTIȚIE"],
+     'origin-headlines': [u"ÎNALTA CURTE DE CASAȚIE ȘI JUSTIȚIE"]},
+
 ]
 
 ARTICLE_TYPE = {t['type']: t for t in ARTICLE_TYPES}
@@ -222,7 +226,24 @@ class BnrActParser(SummaryParser):
                              ur'(?P<title_start>\s+.*)')
 
 
-for cls in [DecretParser, CcParser, HgParser, AdminActParser, BnrActParser]:
+class IccjParser(SummaryParser):
+
+    article_type = ARTICLE_TYPE['iccj']
+
+    title_begin = re.compile(ur'^(?P<headline>(?P<type>Decizia)'
+                                ur' nr. (?P<number>\d+) '
+                                ur'din (?P<date>\d{1,2} \w+ \d{4}))')
+
+    def make_article(self, match):
+        return {
+            'section': self.article_type['type'],
+            'title': match.group(0),
+            'headline': match.group('headline'),
+        }
+
+
+for cls in [DecretParser, CcParser, HgParser, AdminActParser, BnrActParser,
+            IccjParser]:
     ARTICLE_TYPE[cls.article_type['type']]['parser'] = cls
 
 
