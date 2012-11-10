@@ -53,8 +53,7 @@ class TikaMofParserTest(unittest.TestCase):
 
     def test_all_sections_found(self):
         sections = set(article['section'] for article in self.data)
-        self.assertItemsEqual(sections, ['decizie-cc', 'hotarare-guvern',
-                                         'act-admin-centrala', 'act-bnr'])
+        self.assertItemsEqual(sections, ['cc', 'hg', 'adm', 'bnr'])
 
     def test_cc_decision_title_found(self):
         cc_decision = self.data[0]
@@ -71,7 +70,7 @@ class TikaMofParserTest(unittest.TestCase):
 
     def test_hg_second_section_has_correct_title(self):
         hg_290 = self.data[2]
-        self.assertEqual(hg_290['section'], 'hotarare-guvern')
+        self.assertEqual(hg_290['section'], 'hg')
         self.assertTrue(hg_290['title'].startswith(
                 u"Hotărâre privind încetarea exercitării funcției"))
         self.assertIn((u"încetarea exercitării funcției publice de "
@@ -94,10 +93,10 @@ class TikaMofParserTest(unittest.TestCase):
     def test_article_counts_by_section_are_correct(self):
         counts = count_articles_by_section(self.data)
         self.assertEqual(counts, {
-            'decizie-cc': 1,
-            'hotarare-guvern': 8,
-            'act-admin-centrala': 1,
-            'act-bnr': 1,
+            'cc': 1,
+            'hg': 8,
+            'adm': 1,
+            'bnr': 1,
         })
 
     def test_cc_article_body_contains_text(self):
@@ -123,7 +122,7 @@ class MofParserTest_2010_0666(unittest.TestCase):
     def test_article_count(self):
         counts = count_articles_by_section(self.data)
         self.assertEqual(counts, {
-            'decret-presedinte': 10,
-            'hotarare-guvern': 1,
-            'act-admin-centrala': 12,
+            'pres': 10,
+            'hg': 1,
+            'adm': 12,
         })

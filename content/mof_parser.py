@@ -17,25 +17,25 @@ def cleanspace(text):
 
 ARTICLE_TYPES = [
 
-    {'type': 'decret-presedinte',
+    {'type': 'pres',
      'group-headline': [u"DECRETE"],
      'origin-headlines': [u"PREȘEDINTELE ROMÂNIEI"]},
 
-    {'type': 'decizie-cc',
+    {'type': 'cc',
      'group-headline': [u"DECIZII ALE CURȚII CONSTITUȚIONALE"],
      'origin-headlines': [u"CURTEA CONSTITUȚIONALĂ"]},
 
-    {'type': 'hotarare-guvern',
+    {'type': 'hg',
      'group-headline': [u"ORDONANȚE ȘI HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI",
                         u"HOTĂRÂRI ALE GUVERNULUI ROMÂNIEI"],
      'origin-headlines': [u"GUVERNUL ROMÂNIEI"]},
 
-    {'type': 'act-admin-centrala',
+    {'type': 'adm',
      'group-headline': [(u"ACTE ALE ORGANELOR DE SPECIALITATE ALE "
                          u"ADMINISTRAȚIEI PUBLICE CENTRALE")],
      'origin-headlines': [u"MINISTERUL FINANȚELOR PUBLICE"]},
 
-    {'type': 'act-bnr',
+    {'type': 'bnr',
      'group-headline': [u"ACTE ALE BĂNCII NAȚIONALE A ROMÂNIEI"],
      'origin-headlines': [u"BANCA NAȚIONALĂ A ROMÂNIEI"]},
 
@@ -169,7 +169,7 @@ class SummaryParser(object):
 
 class DecretParser(SummaryParser):
 
-    article_type = ARTICLE_TYPE['decret-presedinte']
+    article_type = ARTICLE_TYPE['pres']
 
     title_begin = re.compile(ur'^(?P<number>\d+). — '
                              ur'(?P<type>Decret)'
@@ -178,7 +178,7 @@ class DecretParser(SummaryParser):
 
 class CcParser(SummaryParser):
 
-    article_type = ARTICLE_TYPE['decizie-cc']
+    article_type = ARTICLE_TYPE['cc']
 
     title_begin = re.compile(ur'^(?P<headline>(?P<type>Decizia)'
                                 ur' nr. (?P<number>\d+) '
@@ -196,7 +196,7 @@ class CcParser(SummaryParser):
 
 class HgParser(SummaryParser):
 
-    article_type = ARTICLE_TYPE['hotarare-guvern']
+    article_type = ARTICLE_TYPE['hg']
 
     title_begin = re.compile(ur'^(?P<number>\d+). — '
                              ur'(?P<type>Ordonanță de urgență|'
@@ -206,7 +206,7 @@ class HgParser(SummaryParser):
 
 class AdminActParser(SummaryParser):
 
-    article_type = ARTICLE_TYPE['act-admin-centrala']
+    article_type = ARTICLE_TYPE['adm']
 
     title_begin = re.compile(ur'^(?P<number>\S+). — '
                              ur'(?P<type>Ordin)'
@@ -215,7 +215,7 @@ class AdminActParser(SummaryParser):
 
 class BnrActParser(SummaryParser):
 
-    article_type = ARTICLE_TYPE['act-bnr']
+    article_type = ARTICLE_TYPE['bnr']
 
     title_begin = re.compile(ur'^(?P<number>\d+). — '
                              ur'(?P<type>Circulară)'
