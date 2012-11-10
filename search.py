@@ -8,7 +8,6 @@ import sys
 import json
 import subprocess
 import logging
-import socket
 from path import path
 from time import time
 from celery.signals import setup_logging
@@ -19,6 +18,8 @@ from pyquery import PyQuery as pq
 
 import utils
 from html2text import html2text
+
+from content.tika import invoke_tika
 
 
 @setup_logging.connect
@@ -53,23 +54,6 @@ def es_search(text, fields=None, page=1, per_page=20):
 search_pages = flask.Blueprint('search', __name__, template_folder='templates')
 
 
-def invoke_tika(data_file, host='127.0.0.1', port=9999, buffer_size=16384):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((host, port))
-    while True:
-        chunk = data_file.read(buffer_size)
-        if not chunk:
-            break
-        sock.send(chunk)
-    sock.shutdown(socket.SHUT_WR)
-    while True:
-        chunk = sock.recv(buffer_size)
-        if not chunk:
-            break
-        yield chunk
-    sock.close()
-
-
 @celery.task
 @appcontext
 def index(file_path, debug=False):
@@ -77,7 +61,6 @@ def index(file_path, debug=False):
     from harvest import build_fs_path
     es_url = flask.current_app.config['PUBDOCS_ES_URL']
     repo = flask.current_app.config['PUBDOCS_FILE_REPO'] / ''
-    tika_port = int(flask.current_app.config['PUBDOCS_TIKA_PORT'])
 
     (section, year, name) = file_path.replace(repo, "").split('/')
     fs_path = build_fs_path(file_path)
@@ -85,7 +68,7 @@ def index(file_path, debug=False):
         start = time()
         try:
             with open(fs_path, 'rb') as pdf_file:
-                for chunk in invoke_tika(pdf_file, port=tika_port):
+                for chunk in invoke_tika(pdf_file):
                     temp.write(chunk)
                 temp.seek(0)
 

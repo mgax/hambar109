@@ -7,6 +7,7 @@ from flask.ext.script import Manager
 import requests
 import harvest
 import search
+from content import mof_import
 
 
 def create_app():
@@ -19,8 +20,6 @@ def create_app():
                                            or app.instance_path)
     if 'PUBDOCS_ES_URL' in os.environ:
         app.config['PUBDOCS_ES_URL'] = os.environ['PUBDOCS_ES_URL']
-    if 'PUBDOCS_TIKA_PORT' in os.environ:
-        app.config['PUBDOCS_TIKA_PORT'] = os.environ['PUBDOCS_TIKA_PORT']
     if os.environ.get('DEBUG'):
         app.debug = True
     app.register_blueprint(search.search_pages)
@@ -41,6 +40,7 @@ manager = Manager(create_app)
 
 harvest.register_commands(manager)
 search.register_commands(manager)
+mof_import.register_commands(manager)
 
 
 @manager.option('-p', '--port')
