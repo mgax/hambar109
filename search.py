@@ -185,36 +185,26 @@ def stats():
 
 @search_pages.route('/stats_json')
 def stats_json():
-    repo_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / 'MOF1' / '2009'
+    repo_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / 'MOF1'
     tree = construct_tree(repo_path)
     return flask.jsonify(tree)
 
 
 def construct_tree(fs_path):
-    """
-    def recursion(loc):
-        children = []
-        if loc.isdir():
-            for f in loc.files():
-                children.append({"name": f.name.upper(), "size": f.size})
-            for item in loc.dirs():
-                children += [recursion(item)]
-        return {"name": loc.name.upper(), "children": children}
-    return recursion(fs_path)
-    """
-    def recursion(loc, include_files=True):
+    def recursion(loc, include_files=False):
         children = []
         if loc.isdir():
             if include_files:
                 for f in loc.files():
-                    children.append({"name": f.name.upper(), "size": f.size/1000})
+                    children.append({"name": f.name.upper(), "size": f.size})
             for item in loc.dirs():
-                #if item.dirs():
-                children += [recursion(item)]
-                """
+                if include_files:
+                    children += [recursion(item)]
                 else:
-                    children.append({"name": item.name.upper(), "size": item.size})
-                """
+                    if item.dirs():
+                        children += [recursion(item)]
+                    else:
+                        children.append({"name": item.name.upper(), "size": len(item.files())})
         return {"name": loc.name.upper(), "children": children}
     return recursion(fs_path)
 
