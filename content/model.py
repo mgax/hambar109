@@ -41,7 +41,7 @@ class ImportResult(Base):
     id = sa.Column(sa.Integer, primary_key=True)
     time = sa.Column(sa.DateTime)
     document_id = sa.Column(sa.Integer, sa.ForeignKey('documents.id'))
-    document = relationship("Document")
+    document = relationship("Document", backref='import_results')
     success = sa.Column(sa.Boolean)
 
 

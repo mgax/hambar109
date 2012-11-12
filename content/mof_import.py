@@ -3,6 +3,7 @@ import sys
 import logging
 from contextlib import contextmanager
 from datetime import datetime
+from collections import defaultdict
 from path import path
 import simplejson as json
 import flask
@@ -172,8 +173,23 @@ def prepare_db_session():
     flask.g.session = flask.current_app.extensions['hambar-db'].session
 
 
-@mof_import_views.route('/import_status')
-def import_status():
+@mof_import_views.route('/import_stats')
+def import_stats():
+    from .model import Document
+    counts = defaultdict(int)
+    for doc in flask.g.session.query(Document):
+        counts['total'] += 1
+        n_acts = len(doc.acts)
+        if n_acts:
+            counts['success'] += 1
+            counts['acts'] += n_acts
+    return flask.render_template('import_stats.html', **{
+        'counts': dict(counts),
+    })
+
+
+@mof_import_views.route('/import_results')
+def import_results():
     from .model import ImportResult
     return flask.render_template('mof_import_status.html', **{
         'import_results': flask.g.session.query(ImportResult),
