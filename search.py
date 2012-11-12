@@ -174,14 +174,20 @@ def stats_json():
 
 
 def construct_tree(fs_path):
-    def recursion(loc):
+    def recursion(loc, include_files=False):
         children = []
         if loc.isdir():
+            if include_files:
+                for f in loc.files():
+                    children.append({"name": f.name.upper(), "size": f.size})
             for item in loc.dirs():
-                if item.dirs():
+                if include_files:
                     children += [recursion(item)]
                 else:
-                    children.append({"name": item.name.upper(), "size": item.size})
+                    if item.dirs():
+                        children += [recursion(item)]
+                    else:
+                        children.append({"name": item.name.upper(), "size": len(item.files())})
         return {"name": loc.name.upper(), "children": children}
     return recursion(fs_path)
 
