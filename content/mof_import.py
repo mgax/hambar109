@@ -61,6 +61,10 @@ def save_document_acts(acts, document_code):
 
     with sql_context() as session:
         document_row = get_or_create(session, Document, code=document_code)
+
+        for act_row in document_row.acts:
+            session.delete(act_row)
+
         for item in acts:
             act_type_row = get_or_create(session, ActType,
                                          code=item['section'])
