@@ -34,6 +34,8 @@ PUBDOCS_CONFIG = {
     'PYTHONPATH': '.',
     'PUBDOCS_TIKA_PORT': '27303',
     'PUBDOCS_TIKA_JAR': PUBDOCS_VENV / 'tika-app-1.2.jar',
+    'MOF_DIR': SARGE_HOME / 'var' / 'pubdocs-file-repo' / 'MOF1',
+    'DATABASE': 'sqlite:///' + SARGE_HOME / 'var' / 'pubdocs-db' / 'db.sqlite',
 }
 
 
