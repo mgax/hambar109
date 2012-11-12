@@ -10,11 +10,17 @@ class BubbleChart
     # depending on which view is currently being
     # used
     @center = {x: @width / 2, y: @height / 2}
-    @year_centers = {
-      "2008": {x: @width / 3, y: @height / 2},
-      "2009": {x: @width / 2, y: @height / 2},
-      "2010": {x: 2 * @width / 3, y: @height / 2}
-    }
+    @year_centers = () =>
+      years = {}
+      width = @width
+      height = @height
+      i = 0
+      years_no = @data.children.length
+      @data.children.forEach (d) ->
+        years[d.name] = {x: width/years_no * i, y: height / 2}
+        i = i + 1
+
+      years
 
     # used when setting up force and
     # moving around nodes
@@ -149,7 +155,7 @@ class BubbleChart
   # move all circles to their associated @year_centers 
   move_towards_year: (alpha) =>
     (d) =>
-      target = @year_centers[d.year]
+      target = @year_centers()[d.year]
       d.x = d.x + (target.x - d.x) * (@damper + 0.02) * alpha * 1.1
       d.y = d.y + (target.y - d.y) * (@damper + 0.02) * alpha * 1.1
 
