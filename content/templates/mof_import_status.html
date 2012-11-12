@@ -16,8 +16,13 @@
         <tt><a href="{{ doc_url }}">{{ document.code }}</a></tt>
       </td>
 
-      <td style="text-align: center">
-        {{ "✔" if result.success else "✘" }}
+      <td style="text-align: center;
+          {{- " background-color: #d77" if not result.success }}">
+        {% if result.success %}
+          {{ document.acts|length }}
+        {% else %}
+          ✘
+        {% endif %}
       </td>
 
       <td>
