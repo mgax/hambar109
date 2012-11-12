@@ -29,7 +29,7 @@ class Act(Base):
     type_id = sa.Column(sa.Integer, sa.ForeignKey('act_types.id'))
     type = relationship("ActType")
     document_id = sa.Column(sa.Integer, sa.ForeignKey('documents.id'))
-    document = relationship("Document")
+    document = relationship("Document", backref='acts')
     ident = sa.Column(sa.String)
     title = sa.Column(sa.String)
     text = sa.Column(sa.Text)

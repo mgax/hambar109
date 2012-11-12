@@ -11,7 +11,9 @@
     <tr>
 
       <td>
-        <tt>{{ result.document.code }}</tt>
+        {% set document = result.document %}
+        {% set doc_url = url_for('.document', document_id=document.id) %}
+        <tt><a href="{{ doc_url }}">{{ document.code }}</a></tt>
       </td>
 
       <td style="text-align: center">

@@ -1,0 +1,11 @@
+<h1>{{ document.code }}</h1>
+
+<p>Import time: {{ document.import_time }}</p>
+
+<ul>
+{% for act in document.acts %}
+  <li>
+    {{ act.type.code }} {{ act.ident or '' }} {{ act.title }}
+  </li>
+{% endfor %}
+</ul>

@@ -132,10 +132,22 @@ def register_commands(manager):
 mof_import_views = flask.Blueprint('mof_import', __name__,
                                    template_folder='templates')
 
+@mof_import_views.before_request
+def prepare_db_session():
+    flask.g.session = flask.current_app.extensions['hambar-db'].session
+
+
 @mof_import_views.route('/import_status')
 def import_status():
     from .model import ImportResult
-    session = flask.current_app.extensions['hambar-db'].session
     return flask.render_template('mof_import_status.html', **{
-        'import_results': session.query(ImportResult),
+        'import_results': flask.g.session.query(ImportResult),
+    })
+
+
+@mof_import_views.route('/documents/<string:document_id>')
+def document(document_id):
+    from .model import Document
+    return flask.render_template('document.html', **{
+        'document': flask.g.session.query(Document).get(document_id),
     })
