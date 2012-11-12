@@ -1,0 +1,13 @@
+<ul>
+{% for document in all_documents %}
+
+  {% set doc_url = url_for('.document', document_id=document.id) %}
+  {% set n_acts = document.acts|length %}
+
+  <li style="{{ "background-color: #fa9" if not n_acts }}">
+    <a href="{{ doc_url }}">{{ document.code }}</a>
+    {{ n_acts or "✘" }}
+  </li>
+
+{% endfor %}
+</ul>

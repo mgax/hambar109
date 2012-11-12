@@ -1,0 +1,37 @@
+<table>
+
+  <thead>
+    <td>Document</td>
+    <td>Success</td>
+    <td>Time</td>
+  </thead>
+
+  <tbody>
+  {% for result in import_results %}
+    <tr>
+
+      <td>
+        {% set document = result.document %}
+        {% set doc_url = url_for('.document', document_id=document.id) %}
+        <tt><a href="{{ doc_url }}">{{ document.code }}</a></tt>
+      </td>
+
+      <td style="text-align: center;
+          {{- " background-color: #d77" if not result.success }}">
+        {% if result.success %}
+          {{ document.acts|length }}
+        {% else %}
+          ✘
+        {% endif %}
+      </td>
+
+      <td>
+        {{ result.time.strftime('%Y-%m-%d') }}
+        <small>{{ result.time.strftime('%H:%M') }}</small>
+      </td>
+
+    </tr>
+  {% endfor %}
+  </tbody>
+
+</table>

@@ -10,7 +10,6 @@ import subprocess
 import logging
 from path import path
 from time import time
-from celery.signals import setup_logging
 from tempfile import NamedTemporaryFile as NamedTempFile
 from tempfile import TemporaryFile
 from harvest import appcontext, celery
@@ -18,14 +17,7 @@ from pyquery import PyQuery as pq
 
 import utils
 from html2text import html2text
-
 from content.tika import invoke_tika
-
-
-@setup_logging.connect
-def configure_worker(sender=None, **extra):
-    from utils import set_up_logging
-    set_up_logging()
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

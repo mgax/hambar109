@@ -52,3 +52,10 @@ begins with ``sandbox/bin``::
 ``http://localhost:5000``::
 
     $ honcho start
+
+
+Database schema
+---------------
+To get your database up to date, run::
+
+    $ honcho run alembic upgrade head

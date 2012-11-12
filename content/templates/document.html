@@ -1,0 +1,15 @@
+<h1>{{ document.code }}</h1>
+
+<p>Import time: {{ document.import_time }}</p>
+
+<ul>
+{% for act in document.acts %}
+  <li>
+
+    <strong>{{ act.type.code }} {{ act.ident or '' }}</strong>
+
+    {{ act.title|truncate(100) }}
+
+  </li>
+{% endfor %}
+</ul>
