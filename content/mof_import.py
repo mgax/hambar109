@@ -150,6 +150,14 @@ def import_status():
     })
 
 
+@mof_import_views.route('/documents/')
+def document_list():
+    from .model import Document
+    return flask.render_template('document_list.html', **{
+        'all_documents': flask.g.session.query(Document),
+    })
+
+
 @mof_import_views.route('/documents/<string:document_id>')
 def document(document_id):
     from .model import Document
