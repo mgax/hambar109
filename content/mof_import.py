@@ -7,6 +7,7 @@ import simplejson as json
 import flask
 from .tika import invoke_tika
 from .mof_parser import MofParser
+from harvest import celery
 
 
 log = logging.getLogger(__name__)
@@ -33,7 +34,14 @@ def find_mof(name):
 
 @contextmanager
 def sql_context():
-    session = flask.current_app.extensions['hambar-db'].session
+    if flask._app_ctx_stack.top is None:
+        # not inside a flask app
+        from model import get_session_maker
+        Session = get_session_maker()
+        session = Session()
+
+    else:
+        session = flask.current_app.extensions['hambar-db'].session
 
     try:
         yield session
@@ -92,6 +100,42 @@ def save_import_result(document_code, success):
         session.add(result_row)
 
 
+@celery.task
+def do_mof_import(name, raw_html, as_json):
+    pdf_path = find_mof(name)
+
+    log.info("Importing pdf %s", pdf_path)
+
+    with pdf_path.open('rb') as pdf_file:
+        html = ''.join(invoke_tika(pdf_file))
+
+    if raw_html:
+        print html
+        return
+
+    try:
+        articles = MofParser(html).parse()
+
+    except Exception, e:
+        log.exception("Failed to parse document")
+
+        if as_json:
+            return json.dumps([])
+
+        else:
+            save_import_result(document_code=name, success=False)
+
+    else:
+        log.info("%d articles found", len(articles))
+
+        if as_json:
+            print json.dumps(articles, indent=2, sort_keys=True)
+            return
+
+        save_document_acts(articles, document_code=name)
+        save_import_result(document_code=name, success=True)
+
+
 def register_commands(manager):
 
     @manager.option('-r', '--raw-html', action='store_true',
@@ -99,39 +143,16 @@ def register_commands(manager):
     @manager.option('-j', '--as-json', action='store_true',
                     help="Print as json")
     @manager.option('name', help="Name of document to be loaded")
-    def mof_import(name, raw_html=False, as_json=False):
-        pdf_path = find_mof(name)
+    @manager.option('-w', '--as-worker', action='store_true',
+                    help="Run as worker task")
+    def mof_import(name, raw_html=False, as_json=False, as_worker=False):
+        args = (name, raw_html, as_json)
 
-        log.info("Importing pdf %s", pdf_path)
-
-        with pdf_path.open('rb') as pdf_file:
-            html = ''.join(invoke_tika(pdf_file))
-
-        if raw_html:
-            print html
-            return
-
-        try:
-            articles = MofParser(html).parse()
-
-        except Exception, e:
-            log.exception("Failed to parse document")
-
-            if as_json:
-                return json.dumps([])
-
-            else:
-                save_import_result(document_code=name, success=False)
+        if as_worker:
+            do_mof_import.delay(*args)
 
         else:
-            log.info("%d articles found", len(articles))
-
-            if as_json:
-                print json.dumps(articles, indent=2, sort_keys=True)
-                return
-
-            save_document_acts(articles, document_code=name)
-            save_import_result(document_code=name, success=True)
+            do_mof_import(*args)
 
 
 mof_import_views = flask.Blueprint('mof_import', __name__,
