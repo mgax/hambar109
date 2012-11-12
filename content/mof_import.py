@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 from contextlib import contextmanager
 from datetime import datetime
@@ -146,6 +147,14 @@ def register_commands(manager):
     @manager.option('-w', '--as-worker', action='store_true',
                     help="Run as worker task")
     def mof_import(name, raw_html=False, as_json=False, as_worker=False):
+        if name == '-':
+            for line in sys.stdin:
+                mof_import(line.strip(), raw_html, as_json, as_worker)
+            return
+
+        if name.endswith('.pdf'):
+            name = name.rsplit('.', 1)[0]
+
         args = (name, raw_html, as_json)
 
         if as_worker:
