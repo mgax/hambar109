@@ -71,7 +71,8 @@ def save_document_acts(acts, document_code):
             number = item.get('number')
             act_row = Act(type=act_type_row,
                           document=document_row,
-                          ident=number)
+                          ident=number,
+                          title=item['title'])
             session.add(act_row)
             session.flush()
             log.info("New Act record %r: %s %s",
