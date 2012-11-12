@@ -29,6 +29,8 @@ def create_app():
 
     app.register_blueprint(search.search_pages)
 
+    app.register_blueprint(mof_import.mof_import_views, url_prefix='/db')
+
     @app.route('/crashme')
     def crashme():
         raise RuntimeError("Crashing, as requested.")

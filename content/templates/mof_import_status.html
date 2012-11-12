@@ -1,0 +1,30 @@
+<table>
+
+  <thead>
+    <td>Document</td>
+    <td>Success</td>
+    <td>Time</td>
+  </thead>
+
+  <tbody>
+  {% for result in import_results %}
+    <tr>
+
+      <td>
+        <tt>{{ result.document.code }}</tt>
+      </td>
+
+      <td style="text-align: center">
+        {{ "✔" if result.success else "✘" }}
+      </td>
+
+      <td>
+        {{ result.time.strftime('%Y-%m-%d') }}
+        <small>{{ result.time.strftime('%H:%M') }}</small>
+      </td>
+
+    </tr>
+  {% endfor %}
+  </tbody>
+
+</table>

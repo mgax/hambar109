@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from path import path
 import simplejson as json
+import flask
 from .tika import invoke_tika
 from .mof_parser import MofParser
 
@@ -126,3 +127,15 @@ def register_commands(manager):
 
             save_document_acts(articles, document_code=name)
             save_import_result(document_code=name, success=True)
+
+
+mof_import_views = flask.Blueprint('mof_import', __name__,
+                                   template_folder='templates')
+
+@mof_import_views.route('/import_status')
+def import_status():
+    from .model import ImportResult
+    session = flask.current_app.extensions['hambar-db'].session
+    return flask.render_template('mof_import_status.html', **{
+        'import_results': session.query(ImportResult),
+    })
