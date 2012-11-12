@@ -43,3 +43,37 @@ class ImportResult(Base):
     document_id = sa.Column(sa.Integer, sa.ForeignKey('documents.id'))
     document = relationship("Document")
     success = sa.Column(sa.Boolean)
+
+
+def get_session_maker():
+    import os
+    from sqlalchemy.orm import sessionmaker
+    engine = sa.create_engine(os.environ['DATABASE'])
+    return sessionmaker(bind=engine)
+
+
+class DatabaseForFlask(object):
+
+    def __init__(self):
+        import flask
+        self._stack = flask._app_ctx_stack
+        self.Session = get_session_maker()
+
+    def initialize_app(self, app):
+        app.extensions['hambar-db'] = self
+        app.teardown_appcontext(self.teardown)
+
+    @property
+    def session(self):
+        ctx = self._stack.top
+        if not hasattr(ctx, 'hambar_db_session'):
+            ctx.hambar_db_session = self.Session()
+        return ctx.hambar_db_session
+
+    def teardown(self, exception):
+        ctx = self._stack.top
+        if hasattr(ctx, 'hambar_db_session'):
+            if exception is None:
+                ctx.hambar_db_session.commit()
+            else:
+                ctx.hambar_db_session.rollback()

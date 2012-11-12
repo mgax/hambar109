@@ -11,6 +11,8 @@ from content import mof_import
 
 
 def create_app():
+    from content.model import DatabaseForFlask
+
     app = flask.Flask(__name__, instance_relative_config=True)
     app.config.update({
         'STATIC_LIB_URL': 'http://grep.ro/quickpub/lib',
@@ -22,6 +24,9 @@ def create_app():
         app.config['PUBDOCS_ES_URL'] = os.environ['PUBDOCS_ES_URL']
     if os.environ.get('DEBUG'):
         app.debug = True
+
+    DatabaseForFlask().initialize_app(app)
+
     app.register_blueprint(search.search_pages)
 
     @app.route('/crashme')
