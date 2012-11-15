@@ -73,13 +73,10 @@ class BubbleChart
   # create svg at #vis and then 
   # create circle representation for each node
   create_vis: () =>
-    if @vis
-      debugger
-    else
-      @vis = d3.select("#vis").append("svg:svg")
-        .attr("width", @width)
-        .attr("height", @height)
-        .attr("id", "svg_vis")
+    @vis = d3.select("#vis").append("svg:svg")
+      .attr("width", @width)
+      .attr("height", @height)
+      .attr("id", "svg_vis")
 
     @circles = @vis.selectAll("circle")
       .data(@nodes, (d) -> d.id)
@@ -99,9 +96,18 @@ class BubbleChart
       .on("mouseover", (d,i) -> that.show_details(d,i,this))
       .on("mouseout", (d,i) -> that.hide_details(d,i,this))
 
+
     # Fancy transition to make bubbles appear, ending with the
     # correct radius
     #@circles.transition().duration(2000).attr("r", (d) -> d.radius)
+    @circles.transition().duration(3000).each('end', (d) ->
+      if d.radius > 10
+          d3.select('svg').append("svg:text").attr("class", "label")
+           .attr("x", d.x)
+           .attr("y", d.y)
+           .attr("text-anchor", "middle")
+           .text(d.id)
+    )
 
 
   # Charge function that is called for each node.
@@ -189,6 +195,7 @@ class BubbleChart
       .attr("x", (d) => years_x[d] )
       .attr("y", @height/6 - 30)
       .attr("text-anchor", "middle") .text((d) -> d)
+
 
   # Method to hide year titiles
   hide_years: () =>
