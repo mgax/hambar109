@@ -178,6 +178,7 @@ class BubbleChart
 
   # Method to display year titles
   display_years: () =>
+    $('.label').hide()
     years_x = {}
     i = 0
     width = @width
