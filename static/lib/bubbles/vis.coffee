@@ -12,12 +12,14 @@ class BubbleChart
     @center = {x: @width / 2, y: @height / 2}
     @year_centers = () =>
       years = {}
+      years_list = []
       width = @width
       height = @height
       i = 0
-      years_no = @data.children.length
-      @data.children.forEach (d) ->
-        years[d.name] = {x: width/years_no * i, y: height / 2}
+      years_list = (parseInt(d.name) for d in @data.children)
+      years_list.sort (a,b) -> a - b
+      years_list.forEach (d) ->
+        years[d] = {x: width/years_list.length * i + 20, y: height / 6}
         i = i + 1
 
       years
@@ -41,6 +43,7 @@ class BubbleChart
     # use the max total_amount in the data as the max in the scale's domain
     max_amount = d3.max(@data.children, (d) -> parseInt(d.size))
     @radius_scale = d3.scale.pow().exponent(0.5).domain([0, max_amount]).range([2, 85])
+    @min_radius_scale = d3.scale.pow().exponent(0.5).domain([0, max_amount]).range([2, 20])
     this.create_nodes()
     this.create_vis()
 
@@ -53,6 +56,7 @@ class BubbleChart
       node = {
         id: d.name
         radius: @radius_scale(parseInt(d.size))
+        min_radius: @min_radius_scale(parseInt(d.size))
         value: d.size
         name: d.name
         org: d.name
@@ -92,9 +96,18 @@ class BubbleChart
       .on("mouseover", (d,i) -> that.show_details(d,i,this))
       .on("mouseout", (d,i) -> that.hide_details(d,i,this))
 
+
     # Fancy transition to make bubbles appear, ending with the
     # correct radius
-    @circles.transition().duration(2000).attr("r", (d) -> d.radius)
+    #@circles.transition().duration(2000).attr("r", (d) -> d.radius)
+    @circles.transition().duration(3000).each('end', (d) ->
+      if d.radius > 10
+          d3.select('svg').append("svg:text").attr("class", "label")
+           .attr("x", d.x)
+           .attr("y", d.y)
+           .attr("text-anchor", "middle")
+           .text(d.id)
+    )
 
 
   # Charge function that is called for each node.
@@ -127,6 +140,7 @@ class BubbleChart
         @circles.each(this.move_towards_center(e.alpha))
           .attr("cx", (d) -> d.x)
           .attr("cy", (d) -> d.y)
+          .attr("r", (d) -> d.radius)
     @force.start()
 
     this.hide_years()
@@ -148,6 +162,7 @@ class BubbleChart
         @circles.each(this.move_towards_year(e.alpha))
           .attr("cx", (d) -> d.x)
           .attr("cy", (d) -> d.y)
+          .attr("r", (d) -> d.radius)
     @force.start()
 
     this.display_years()
@@ -156,22 +171,32 @@ class BubbleChart
   move_towards_year: (alpha) =>
     (d) =>
       target = @year_centers()[d.year]
-      d.x = d.x + (target.x - d.x) * (@damper + 0.02) * alpha * 1.1
-      d.y = d.y + (target.y - d.y) * (@damper + 0.02) * alpha * 1.1
+      d.radius = if d.radius > d.min_radius then d.radius/2 * 1.85 else d.min_radius
+      d.x = d.x + (target.x - d.x) * (@damper + 0.02)# * alpha * 1.1
+      d.y = d.y + (target.y - d.y) * (@damper + 0.02)# * alpha * 1.1
+
 
   # Method to display year titles
   display_years: () =>
-    years_x = {"2008": 160, "2009": @width / 2, "2010": @width - 160}
+    $('.label').hide()
+    years_x = {}
+    i = 0
+    width = @width
+    years_list = (parseInt(d.name) for d in @data.children)
+    years_list.sort (a,b) -> a - b
+    years_list.forEach (d) ->
+      years_x[d] = width/years_list.length * i + 20
+      i = i+1
     years_data = d3.keys(years_x)
     years = @vis.selectAll(".years")
       .data(years_data)
 
-    years.enter().append("text")
+    years.enter().append("svg:text")
       .attr("class", "years")
       .attr("x", (d) => years_x[d] )
-      .attr("y", 40)
-      .attr("text-anchor", "middle")
-      .text((d) -> d)
+      .attr("y", @height/6 - 30)
+      .attr("text-anchor", "middle") .text((d) -> d)
+
 
   # Method to hide year titiles
   hide_years: () =>

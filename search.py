@@ -158,22 +158,27 @@ def search():
 def stats():
     return flask.render_template('stats.html')
 
+@search_pages.route('/stats_json/<int:year>')
 @search_pages.route('/stats_json')
-def stats_json():
-    repo_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / 'MOF1'
-    tree = construct_tree(repo_path)
+def stats_json(year=None):
+    dir_path = flask.current_app.config['PUBDOCS_FILE_REPO'] / 'MOF1'
+    with_files = False
+    if year and (dir_path / str(year)).exists():
+        dir_path = dir_path / str(year)
+        with_files=True
+    tree = construct_tree(dir_path, with_files)
     return flask.jsonify(tree)
 
 
-def construct_tree(fs_path):
-    def recursion(loc, include_files=False):
+def construct_tree(fs_path, with_files=False):
+    def recursion(loc, with_files):
         children = []
         if loc.isdir():
-            if include_files:
+            if with_files:
                 for f in loc.files():
                     children.append({"name": f.name.upper(), "size": f.size})
             for item in loc.dirs():
-                if include_files:
+                if with_files:
                     children += [recursion(item)]
                 else:
                     if item.dirs():
@@ -181,7 +186,7 @@ def construct_tree(fs_path):
                     else:
                         children.append({"name": item.name.upper(), "size": len(item.files())})
         return {"name": loc.name.upper(), "children": children}
-    return recursion(fs_path)
+    return recursion(fs_path, with_files)
 
 
 def available_files(location):
