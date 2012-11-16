@@ -65,7 +65,8 @@ def index(file_path, debug=False):
                 temp.seek(0)
 
         except Exception as exp:
-            log.critical(exp)
+            log.exception("Exception when calling tika")
+            return
         text = clean(temp.name, debug)
         index_data = {
             'file': b64encode(text),
