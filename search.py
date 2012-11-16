@@ -54,7 +54,10 @@ def index(file_path, debug=False):
     es_url = flask.current_app.config['PUBDOCS_ES_URL']
     repo = flask.current_app.config['PUBDOCS_FILE_REPO'] / ''
 
-    (section, year, name) = file_path.replace(repo, "").split('/')
+    name = file_path.replace(repo, "").split('/')[-1]
+    m = re.match(r'^mof1_(?P<year>\d{4})_\d+\.pdf$', name)
+    section = 'mof1'
+    year = int(m.group('year'))
     fs_path = build_fs_path(file_path)
     with NamedTempFile(mode='w+b', delete=True) as temp:
         start = time()
@@ -69,12 +72,12 @@ def index(file_path, debug=False):
             return
         text = clean(temp.name, debug)
         index_data = {
-            'file': b64encode(text),
+            'text': text,
             'path': file_path,
             'year': int(year),
             'section': int(section[3:]),
         }
-        index_resp = requests.post(es_url + '/mof/attachment/' + name,
+        index_resp = requests.post(es_url + '/hambar109/mof/' + name,
                                    data=flask.json.dumps(index_data))
         assert index_resp.status_code in [200, 201], repr(index_resp)
         if index_resp.status_code == 200:
@@ -211,7 +214,7 @@ def register_commands(manager):
         """ Flush the elasticsearch index """
         es_url = flask.current_app.config['PUBDOCS_ES_URL']
 
-        del_resp = requests.delete(es_url + '/mof')
+        del_resp = requests.delete(es_url + '/hambar109')
         assert del_resp.status_code in [200, 404], repr(del_resp)
 
         index_config = {
@@ -220,27 +223,9 @@ def register_commands(manager):
                           "number_of_replicas": 0},
             },
         }
-        create_resp = requests.put(es_url + '/mof',
+        create_resp = requests.put(es_url + '/hambar109',
                                    data=flask.json.dumps(index_config))
         assert create_resp.status_code == 200, repr(create_resp)
-
-        attachment_config = {
-            "document": {
-                "properties": {
-                    "file": {
-                        "type": "attachment",
-                        "fields": {
-                            "title": {"store": "yes"},
-                            "file": {"store": "yes",
-                                     "term_vector": "with_positions_offsets"},
-                        },
-                    },
-                },
-            },
-        }
-        attach_resp = requests.put(es_url + '/mof/attachment/_mapping',
-                                   data=flask.json.dumps(attachment_config))
-        assert attach_resp.status_code == 200, repr(attach_resp)
 
     @manager.command
     def search(text):
