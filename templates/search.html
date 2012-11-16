@@ -22,8 +22,11 @@
           <li>
 
             {% set path = hit['fields']['path'] %}
-            {% set kurtyan_url = "http://kurtyan.org/MOF/" + path %}
-            <h4><a class="pd-view" href="{{ kurtyan_url }}">{{ path }}</a></h4>
+            {% set fname = path.split('/')[-1] %}
+            {% set section = fname.split('_')[0][-1] %}
+            {% set year = fname.split('_')[1] %}
+            {% set kurtyan_url = "http://kurtyan.org/MOF/MOF" + section + "/" + year + "/" + fname %}
+            <h4><a class="pd-view" href="{{ kurtyan_url }}">{{ fname }}</a></h4>
 
             {% if 'highlight' in hit %}
               {% for fragment in hit['highlight']['file'] %}
