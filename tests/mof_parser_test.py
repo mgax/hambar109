@@ -1,6 +1,5 @@
 # encoding: utf-8
 import unittest
-from datetime import date
 from path import path
 from content.mof_parser import preprocess, MofParser
 
@@ -151,8 +150,6 @@ class MofParserTest_2007_0463(unittest.TestCase):
 
     def test_article_count(self):
         counts = count_articles_by_section(self.data)
-        from pprint import pprint
-        pprint([a['title'] for a in self.data])
         self.assertEqual(counts, {
             'pres': 6,
             'cc': 1,
