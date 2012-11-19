@@ -18,8 +18,9 @@ def cleanspace(text):
 ARTICLE_TYPES = [
 
     {'type': 'pres',
-     'group-headline': [u"DECRETE"],
-     'origin-headlines': [u"PREȘEDINTELE ROMÂNIEI"]},
+     'group-headline': [u"DECRETE", u"LEGI ȘI DECRETE"],
+     'origin-headlines': [u"PREȘEDINTELE ROMÂNIEI",
+                          u"PARLAMENTUL ROMÂNIEI"]},
 
     {'type': 'cc',
      'group-headline': [u"DECIZII ALE CURȚII CONSTITUȚIONALE"],
@@ -42,6 +43,10 @@ ARTICLE_TYPES = [
     {'type': 'iccj',
      'group-headline': [u"ACTE ALE ÎNALTEI CURȚI DE CASAȚIE ȘI JUSTIȚIE"],
      'origin-headlines': [u"ÎNALTA CURTE DE CASAȚIE ȘI JUSTIȚIE"]},
+
+    {'type': 'pm',
+     'group-headline': [u"DECIZII ALE PRIMULUI-MINISTRU"],
+     'origin-headlines': [u"GUVERNUL ROMÂNIEI PRIMUL-MINISTRU"]},
 
 ]
 
@@ -127,7 +132,7 @@ def preprocess(html):
 
 class SummaryParser(object):
 
-    title_end = re.compile(ur'(\.+\s+)?(\d+(–\d+)?)?$')
+    title_end = re.compile(ur'(\.+\s+)?(\d+([–—]\d+)?)?$')
 
     def clean_title_end(self, raw_title):
         return self.title_end.sub('', raw_title.strip()).strip()
@@ -176,7 +181,7 @@ class DecretParser(SummaryParser):
     article_type = ARTICLE_TYPE['pres']
 
     title_begin = re.compile(ur'^(?P<number>\d+). — '
-                             ur'(?P<type>Decret)'
+                             ur'(?P<type>Decret|Lege)'
                              ur'(?P<title_start>\s+.*)')
 
 
@@ -222,7 +227,7 @@ class BnrActParser(SummaryParser):
     article_type = ARTICLE_TYPE['bnr']
 
     title_begin = re.compile(ur'^(?P<number>\d+). — '
-                             ur'(?P<type>Circulară)'
+                             ur'(?P<type>Circulară|Normă|Ordin)'
                              ur'(?P<title_start>\s+.*)')
 
 
@@ -242,8 +247,17 @@ class IccjParser(SummaryParser):
         }
 
 
+class PmParser(SummaryParser):
+
+    article_type = ARTICLE_TYPE['pm']
+
+    title_begin = re.compile(ur'^(?P<number>\S+). — '
+                             ur'(?P<type>Decizie)'
+                             ur'(?P<title_start>\s+.*)')
+
+
 for cls in [DecretParser, CcParser, HgParser, AdminActParser, BnrActParser,
-            IccjParser]:
+            IccjParser, PmParser]:
     ARTICLE_TYPE[cls.article_type['type']]['parser'] = cls
 
 
@@ -343,7 +357,11 @@ class MofParser(object):
             if self.match_headline_in_body():
                 return
 
-        self.article_lines.append(self.line)
+        if self.article_lines is None:
+            self.warn("(%d) Garbage at article start: %r",
+                      self.lineno, self.line)
+        else:
+            self.article_lines.append(self.line)
 
     def body_article_finish(self):
         self.current_article['body'] = '\n'.join(self.article_lines)

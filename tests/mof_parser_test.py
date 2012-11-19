@@ -141,3 +141,38 @@ class MofParserTest_2009_0177(unittest.TestCase):
             'adm': 3,
             'iccj': 2,
         })
+
+
+class MofParserTest_2007_0463(unittest.TestCase):
+
+    def setUp(self):
+        self.raw = (DATA / 'mof1_2007_0463.html').bytes()
+        self.data = MofParser(self.raw).parse()
+
+    def test_article_count(self):
+        counts = count_articles_by_section(self.data)
+        from pprint import pprint
+        pprint([a['title'] for a in self.data])
+        self.assertEqual(counts, {
+            'pres': 6,
+            'cc': 1,
+            'hg': 2,
+            'pm': 2,
+            'adm': 1,
+            'bnr': 5,
+        })
+
+    def test_parliament_headlines(self):
+        parl_act = self.data[0]
+        self.assertEqual(parl_act['title'],
+                         u"Lege pentru aprobarea Ordonanței Guvernului nr. "
+                         u"24/2007 privind reglementarea unor măsuri "
+                         u"financiar-fiscale în domeniul social și al "
+                         u"locuințelor de serviciu")
+
+    def test_pm_decision(self):
+        pm_act = self.data[9]
+        self.assertEqual(pm_act['section'], 'pm')
+        self.assertEqual(pm_act['title'],
+                         u"Decizie privind stabilirea componenței nominale a "
+                         u"Comisiei pentru studierea robiei romilor")
