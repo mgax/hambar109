@@ -251,10 +251,16 @@ class MofParser(object):
 
     def __init__(self, html):
         self.lines = preprocess(html)
+        self.warnings = False
+
+    def warn(self, *args, **kwargs):
+        self.warnings = True
+        log.warn(*args, **kwargs)
 
     def line_before_summary(self):
         if self.line == 'SUMAR':
             self.document_part = 'summary'
+            self.summary_section = None
             self.summary_section_lines = []
             self.summary_seen_sections = set()
 
@@ -285,7 +291,11 @@ class MofParser(object):
             self.line_in_summary_is_headline()
             return
 
-        self.summary_section_lines.append(self.line)
+        if self.summary_section is None:
+            self.warn("(%d) Garbage at summary start: %r",
+                      self.lineno, self.line)
+        else:
+            self.summary_section_lines.append(self.line)
 
     def match_headline_in_body(self):
         is_match = False
