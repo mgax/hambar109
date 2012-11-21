@@ -16,4 +16,4 @@ def get_document(code):
     if doc is None:
         flask.abort(404)
 
-    return ':)'
+    return flask.jsonify(acts=[{'title': act.title} for act in doc.acts])

@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import unittest
 import flask
+from flask import json
 
 
 @contextmanager
@@ -36,3 +37,15 @@ class ApiTest(unittest.TestCase):
 
         resp = self.client.get('/api/document/mof1_2007_0123')
         self.assertEqual(resp.status_code, 200)
+
+    def test_api_returns_act_title(self):
+        from content.model import Document, Act, ActType
+        with db_session(self.app) as session:
+            proclamation = ActType(code='proc')
+            doc = Document(code='mof1_2007_0123')
+            act1 = Act(document=doc, type=proclamation, title="Independence")
+            session.add_all([proclamation, doc, act1])
+
+        resp = self.client.get('/api/document/mof1_2007_0123')
+        data = json.loads(resp.data)
+        self.assertEqual(data['acts'][0]['title'], "Independence")
