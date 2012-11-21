@@ -82,7 +82,9 @@ def save_document_acts(acts, document_code):
             act_row = Act(type=act_type_row,
                           document=document_row,
                           ident=number,
-                          title=item['title'])
+                          title=item['title'],
+                          text=item['body'],
+                          headline=item.get('headline'))
             session.add(act_row)
             session.flush()
             log.info("New Act record %r: %s %s",
@@ -170,14 +172,14 @@ mof_import_views = flask.Blueprint('mof_import', __name__,
 
 @mof_import_views.before_request
 def prepare_db_session():
-    flask.g.session = flask.current_app.extensions['hambar-db'].session
+    flask.g.dbsession = flask.current_app.extensions['hambar-db'].session
 
 
 @mof_import_views.route('/import_stats')
 def import_stats():
     from .model import Document
     counts = defaultdict(int)
-    for doc in flask.g.session.query(Document):
+    for doc in flask.g.dbsession.query(Document):
         counts['total'] += 1
         n_acts = len(doc.acts)
         if n_acts:
@@ -192,7 +194,7 @@ def import_stats():
 def import_results():
     from .model import ImportResult
     return flask.render_template('mof_import_status.html', **{
-        'import_results': flask.g.session.query(ImportResult),
+        'import_results': flask.g.dbsession.query(ImportResult),
     })
 
 
@@ -200,7 +202,7 @@ def import_results():
 def document_list():
     from .model import Document
     return flask.render_template('document_list.html', **{
-        'all_documents': flask.g.session.query(Document),
+        'all_documents': flask.g.dbsession.query(Document),
     })
 
 
@@ -208,5 +210,5 @@ def document_list():
 def document(document_id):
     from .model import Document
     return flask.render_template('document.html', **{
-        'document': flask.g.session.query(Document).get(document_id),
+        'document': flask.g.dbsession.query(Document).get(document_id),
     })

@@ -7,7 +7,7 @@ from functools import wraps
 from path import path
 import requests
 from celery import Celery
-from celery.signals import setup_logging
+from celery.signals import setup_logging, celeryd_init
 import flask
 
 
@@ -15,7 +15,10 @@ MOF_URL = 'http://kurtyan.org/MOF/'
 
 
 celery = Celery()
-celery.config_from_object('celeryconfig')
+
+@celeryd_init.connect
+def configure_celery(sender=None, **extra):
+    celery.config_from_object('celeryconfig')
 
 
 @setup_logging.connect
