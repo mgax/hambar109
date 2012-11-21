@@ -38,16 +38,19 @@ class ApiTest(unittest.TestCase):
         resp = self.client.get('/api/document/mof1_2007_0123')
         self.assertEqual(resp.status_code, 200)
 
-    def test_api_returns_act_title_and_text(self):
+    def test_api_returns_act_information(self):
         from content.model import Document, Act, ActType
         with db_session(self.app) as session:
-            proclamation = ActType(code='proc')
+            council = ActType(code='counc', label="Revolutionary council")
             doc = Document(code='mof1_2007_0123')
-            act1 = Act(document=doc, type=proclamation,
+            act1 = Act(document=doc, type=council,
+                       ident='13',
                        title="Independence", text="We hereby proclaim!")
-            session.add_all([proclamation, doc, act1])
+            session.add_all([council, doc, act1])
 
         resp = self.client.get('/api/document/mof1_2007_0123')
         data = json.loads(resp.data)
+        self.assertEqual(data['acts'][0]['authority'], "Revolutionary council")
+        self.assertEqual(data['acts'][0]['number'], "13")
         self.assertEqual(data['acts'][0]['title'], "Independence")
         self.assertEqual(data['acts'][0]['body'], "We hereby proclaim!")

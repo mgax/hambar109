@@ -17,6 +17,8 @@ def get_document(code):
         flask.abort(404)
 
     act_data = lambda act: {
+        'authority': act.type.label,
+        'number': act.ident,
         'title': act.title,
         'body': act.text,
     }
