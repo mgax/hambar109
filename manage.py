@@ -12,6 +12,7 @@ from content import mof_import
 
 def create_app():
     from content.model import DatabaseForFlask
+    from content.api import api_views
 
     app = flask.Flask(__name__, instance_relative_config=True)
     app.config.update({
@@ -30,6 +31,8 @@ def create_app():
     app.register_blueprint(search.search_pages)
 
     app.register_blueprint(mof_import.mof_import_views, url_prefix='/db')
+
+    app.register_blueprint(api_views, url_prefix='/api')
 
     @app.route('/crashme')
     def crashme():
