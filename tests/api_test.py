@@ -33,7 +33,7 @@ class ApiTest(unittest.TestCase):
             council = ActType(code='counc', label="Revolutionary council")
             doc = Document(code='mof1_2007_0123')
             act1 = Act(document=doc, type=council,
-                       ident='13',
+                       ident='13', headline="Proclamation",
                        title="Independence", text="We hereby proclaim!")
             session.add_all([council, doc, act1])
 
@@ -43,3 +43,4 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(data['acts'][0]['number'], "13")
         self.assertEqual(data['acts'][0]['title'], "Independence")
         self.assertEqual(data['acts'][0]['body'], "We hereby proclaim!")
+        self.assertEqual(data['acts'][0]['headline'], "Proclamation")

@@ -21,5 +21,6 @@ def get_document(code):
         'number': act.ident,
         'title': act.title,
         'body': act.text,
+        'headline': act.headline,
     }
     return flask.jsonify(acts=[act_data(act) for act in doc.acts])
