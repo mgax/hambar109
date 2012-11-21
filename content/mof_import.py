@@ -150,6 +150,8 @@ def register_commands(manager):
     @manager.option('-w', '--as-worker', action='store_true',
                     help="Run as worker task")
     def mof_import(name, raw_html=False, as_json=False, as_worker=False):
+        import harvest
+        harvest.configure_celery()
         if name == '-':
             for line in sys.stdin:
                 mof_import(line.strip(), raw_html, as_json, as_worker)
