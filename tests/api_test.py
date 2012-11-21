@@ -1,21 +1,16 @@
 import unittest
 import flask
 from flask import json
-from util import db_session
+from util import db_session, configure_memory_db
 
 
 class ApiTest(unittest.TestCase):
 
     def setUp(self):
         from content.api import api_views
-        from content.model import Base, DatabaseForFlask
         self.app = flask.Flask(__name__)
 
-        self.app.config['DATABASE'] = 'sqlite:///:memory:'
-        DatabaseForFlask().initialize_app(self.app)
-        with db_session(self.app) as session:
-            engine = session.bind
-            Base.metadata.create_all(engine)
+        configure_memory_db(self.app)
 
         self.app.register_blueprint(api_views, url_prefix='/api')
         self.client = self.app.test_client()
