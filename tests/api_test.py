@@ -1,13 +1,7 @@
-from contextlib import contextmanager
 import unittest
 import flask
 from flask import json
-
-
-@contextmanager
-def db_session(app):
-    with app.app_context():
-        yield flask.current_app.extensions['hambar-db'].session
+from util import db_session
 
 
 class ApiTest(unittest.TestCase):
