@@ -45,10 +45,10 @@ class ImportResult(Base):
     success = sa.Column(sa.Boolean)
 
 
-def get_session_maker():
+def get_session_maker(database=None):
     import os
     from sqlalchemy.orm import sessionmaker
-    engine = sa.create_engine(os.environ['DATABASE'])
+    engine = sa.create_engine(database or os.environ['DATABASE'])
     return sessionmaker(bind=engine)
 
 
@@ -57,9 +57,9 @@ class DatabaseForFlask(object):
     def __init__(self):
         import flask
         self._stack = flask._app_ctx_stack
-        self.Session = get_session_maker()
 
     def initialize_app(self, app):
+        self.Session = get_session_maker(app.config.get('DATABASE'))
         app.extensions['hambar-db'] = self
         app.teardown_appcontext(self.teardown)
 
