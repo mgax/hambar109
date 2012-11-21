@@ -29,6 +29,7 @@ class ImportTest(unittest.TestCase):
             'number': '13',
             'title': "HG 13 !!!",
             'body': "hello world!",
+            'headline': "Hotarare de guvern",
         }]
 
         with self.app.app_context():
@@ -41,3 +42,4 @@ class ImportTest(unittest.TestCase):
             self.assertEqual(act13.ident, '13')
             self.assertEqual(act13.type.code, 'hg')
             self.assertEqual(act13.text, "hello world!")
+            self.assertEqual(act13.headline, "Hotarare de guvern")

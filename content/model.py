@@ -33,6 +33,7 @@ class Act(Base):
     ident = sa.Column(sa.String)
     title = sa.Column(sa.String)
     text = sa.Column(sa.Text)
+    headline = sa.Column(sa.String)
 
 
 class ImportResult(Base):
