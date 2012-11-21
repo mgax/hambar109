@@ -28,6 +28,7 @@ class ImportTest(unittest.TestCase):
             'section': 'hg',
             'number': '13',
             'title': "HG 13 !!!",
+            'body': "hello world!",
         }]
 
         with self.app.app_context():
@@ -39,3 +40,4 @@ class ImportTest(unittest.TestCase):
             self.assertEqual(act13.title, "HG 13 !!!")
             self.assertEqual(act13.ident, '13')
             self.assertEqual(act13.type.code, 'hg')
+            self.assertEqual(act13.text, "hello world!")

@@ -82,7 +82,8 @@ def save_document_acts(acts, document_code):
             act_row = Act(type=act_type_row,
                           document=document_row,
                           ident=number,
-                          title=item['title'])
+                          title=item['title'],
+                          text=item['body'])
             session.add(act_row)
             session.flush()
             log.info("New Act record %r: %s %s",
