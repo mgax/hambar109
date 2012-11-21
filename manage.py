@@ -63,11 +63,16 @@ def runfcgi(port):
 
 @manager.option('-p', '--port', type=int, default=5000)
 def tornado(port):
+    app = create_app()
+    if app.debug:
+        import logging
+        logging.getLogger('werkzeug').setLevel(logging.INFO)
+        return app.run()
+
     from tornado.wsgi import WSGIContainer
     from tornado.httpserver import HTTPServer
     from tornado.ioloop import IOLoop
 
-    app = create_app()
     wsgi_container = WSGIContainer(app)
     wsgi_container._log = lambda *args, **kwargs: None
     http_server = HTTPServer(wsgi_container)
