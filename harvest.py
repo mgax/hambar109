@@ -26,6 +26,12 @@ def configure_worker(sender=None, **extra):
     from utils import set_up_logging
     set_up_logging()
 
+    from content.model import DatabaseForFlask
+    app = flask.Flask(__name__)
+    DatabaseForFlask().initialize_app(app)
+    app.app_context().push() # long-running app context
+
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
