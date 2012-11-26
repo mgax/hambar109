@@ -121,10 +121,12 @@ def clean(file_path, debug, year=None):
     import itertools
     with open(file_path, 'r') as data:
         text = data.read()
-        chars_mapping = getattr(
-                            utils,
-                            'chars_mapping_%s' %year,
-                            utils.chars_mapping)
+        chars_mapping = utils.chars_mapping
+        #patch with specific year
+        patch_mapping = getattr(utils,
+                                'chars_mapping_%s' %year)
+        if patch_mapping:
+            chars_mapping.update(patch_mapping)
         for bad, good in chars_mapping.iteritems():
             text = text.replace(bad, good)
         if debug:
