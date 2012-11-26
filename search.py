@@ -70,7 +70,7 @@ def index(file_path, debug=False):
         except Exception as exp:
             log.exception("Exception when calling tika")
             return
-        text = clean(temp.name, debug)
+        text = clean(temp.name, debug, year=year)
         index_data = {
             'text': text,
             'path': file_path,
@@ -116,12 +116,16 @@ def chars_debug(match, text, debug=False):
 
 import re
 pat = re.compile(r'([^\x00-\x7F]{2,6})')
-def clean(file_path, debug):
+def clean(file_path, debug, year=None):
     """ Index a file from the repositoy. """
     import itertools
     with open(file_path, 'r') as data:
         text = data.read()
-        for bad, good in utils.chars_mapping.iteritems():
+        chars_mapping = getattr(
+                            utils,
+                            'chars_mapping_%s' %year,
+                            utils.chars_mapping)
+        for bad, good in chars_mapping.iteritems():
             text = text.replace(bad, good)
         if debug:
             good_cases = []
