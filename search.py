@@ -57,7 +57,10 @@ def index(file_path, debug=False):
     name = file_path.replace(repo, "").split('/')[-1]
     m = re.match(r'^mof1_(?P<year>\d{4})_\d+\.pdf$', name)
     section = 'mof1'
-    year = int(m.group('year'))
+    try:
+        year = int(m.group('year'))
+    except AttributeError:
+        year = 0
     fs_path = build_fs_path(file_path)
     with NamedTempFile(mode='w+b', delete=True) as temp:
         start = time()
@@ -123,10 +126,11 @@ def clean(file_path, debug, year=None):
         text = data.read()
         chars_mapping = utils.chars_mapping
         #patch with specific year
-        patch_mapping = getattr(utils,
-                                'chars_mapping_%s' %year)
-        if patch_mapping:
-            chars_mapping.update(patch_mapping)
+        if year:
+            patch_mapping = getattr(utils,
+                                    'chars_mapping_%s' %year)
+            if patch_mapping:
+                chars_mapping.update(patch_mapping)
         for bad, good in chars_mapping.iteritems():
             text = text.replace(bad, good)
         if debug:
