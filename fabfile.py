@@ -10,11 +10,11 @@ env['use_ssh_config'] = True
 
 SARGE_HOME = path('/var/local/pubdocs')
 REDIS_VAR = SARGE_HOME / 'var' / 'pubdocs-redis'
-ES_KIT = ('https://github.com/downloads/elasticsearch/'
-          'elasticsearch/elasticsearch-0.19.11.tar.gz')
+ES_KIT = ('http://download.elasticsearch.org/elasticsearch/'
+          'elasticsearch/elasticsearch-0.20.4.tar.gz')
 PUBDOCS_VENV = SARGE_HOME / 'var' / 'pubdocs-venv'
 PUBDOCS_ES_BIN = (SARGE_HOME / 'var' / 'pubdocs-es' /
-                  'elasticsearch-0.19.11' / 'bin')
+                  'elasticsearch-0.20.4' / 'bin')
 PUBDOCS_TIKA_URL = 'http://www.eu.apache.org/dist/tika/tika-app-1.2.jar'
 
 PUBDOCS_CONFIG = {
