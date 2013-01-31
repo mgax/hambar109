@@ -166,6 +166,22 @@ def register_commands(manager):
         else:
             do_mof_import(*args)
 
+    @manager.option('document_code',
+                    help="Code of document (e.g. mof1_2010_0666)")
+    @manager.option('file_path', type=path,
+                    help="PDF file to import")
+    def import_document(file_path, document_code):
+        from model import Document, Content
+        with file_path.open('rb') as f:
+            html = ''.join(invoke_tika(f)).decode('utf-8')
+
+        with sql_context() as session:
+            document_row = get_or_create(session, Document, code=document_code)
+            session.add(document_row)
+            if document_row.content is not None:
+                session.delete(document_row.content)
+            document_row.content = Content(text=html)
+
 
 mof_import_views = flask.Blueprint('mof_import', __name__,
                                    template_folder='templates')
