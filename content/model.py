@@ -6,12 +6,21 @@ import sqlalchemy as sa
 Base = declarative_base()
 
 
+class Content(Base):
+
+    __tablename__ = 'content'
+    id = sa.Column(sa.Integer, primary_key=True)
+    text = sa.Column(sa.Text)
+
+
 class Document(Base):
 
     __tablename__ = 'documents'
     id = sa.Column(sa.Integer, primary_key=True)
     code = sa.Column(sa.String)
     import_time = sa.Column(sa.DateTime)
+    content_id = sa.Column(sa.Integer, sa.ForeignKey('content.id'))
+    content = relationship('Content')
 
 
 class ActType(Base):
