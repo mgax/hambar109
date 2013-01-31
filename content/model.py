@@ -10,6 +10,7 @@ class Content(Base):
 
     __tablename__ = 'content'
     id = sa.Column(sa.Integer, primary_key=True)
+    time = sa.Column(sa.DateTime, default=sa.func.now())
     text = sa.Column(sa.Text)
 
 
