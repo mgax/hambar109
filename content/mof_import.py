@@ -15,24 +15,6 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-def all_files(directory):
-    for item in directory.listdir():
-        if item.isdir():
-            for subitem in all_files(item):
-                yield subitem
-        elif item.isfile():
-            yield item
-
-
-def find_mof(name):
-    mof_dir = path(os.environ['MOF_DIR']).abspath()
-    for item in all_files(mof_dir):
-        if item.name == name + '.pdf':
-            return item
-    else:
-        raise KeyError("Can't find MOF %r" % name)
-
-
 @contextmanager
 def sql_context():
     if flask._app_ctx_stack.top is None:
@@ -66,25 +48,24 @@ def get_or_create(session, cls, **kwargs):
 
 
 def do_mof_import(code, raw_html, as_json):
-    pdf_path = find_mof(code)
-
-    log.info("Importing pdf %s", pdf_path)
-
-    with pdf_path.open('rb') as pdf_file:
-        html = ''.join(invoke_tika(pdf_file))
-
-    if raw_html:
-        print html
-        return
-
-    if as_json:
-        articles = MofParser(html).parse()
-        print json.dumps(articles, indent=2, sort_keys=True)
-        return
+    from model import Document, Act, ActType, ImportResult
 
     with sql_context() as session:
-        from model import Document, Act, ActType, ImportResult
-        document = get_or_create(session, Document, code=code)
+        document = session.query(Document).filter_by(code=code).first()
+        if document is None or document.content is None:
+            raise RuntimeError("Document text for %r not in database" % code)
+        html = document.content.text.encode('utf-8')
+
+        log.info("Parsing %s", code)
+
+        if raw_html:
+            print html
+            return
+
+        if as_json:
+            articles = MofParser(html).parse()
+            print json.dumps(articles, indent=2, sort_keys=True)
+            return
 
         try:
             articles = MofParser(html).parse()
