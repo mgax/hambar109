@@ -65,46 +65,8 @@ def get_or_create(session, cls, **kwargs):
     return row
 
 
-def save_document_acts(acts, document_code):
-    from model import Act, ActType, Document
-
-    with sql_context() as session:
-        document_row = get_or_create(session, Document, code=document_code)
-
-        for act_row in document_row.acts:
-            session.delete(act_row)
-
-        for item in acts:
-            act_type_row = get_or_create(session, ActType,
-                                         code=item['section'])
-            number = item.get('number')
-            act_row = Act(type=act_type_row,
-                          document=document_row,
-                          ident=number,
-                          title=item['title'],
-                          text=item['body'],
-                          headline=item.get('headline'))
-            session.add(act_row)
-            session.flush()
-            log.info("New Act record %r: %s %s",
-                     act_row.id, act_row.type.code, act_row.ident)
-
-        document_row.import_time = datetime.utcnow()
-
-
-def save_import_result(document_code, success):
-    from model import Document, ImportResult
-
-    with sql_context() as session:
-        document_row = get_or_create(session, Document, code=document_code)
-        result_row = ImportResult(document=document_row,
-                                  success=success,
-                                  time=datetime.utcnow())
-        session.add(result_row)
-
-
-def do_mof_import(name, raw_html, as_json):
-    pdf_path = find_mof(name)
+def do_mof_import(code, raw_html, as_json):
+    pdf_path = find_mof(code)
 
     log.info("Importing pdf %s", pdf_path)
 
@@ -120,17 +82,44 @@ def do_mof_import(name, raw_html, as_json):
         print json.dumps(articles, indent=2, sort_keys=True)
         return
 
-    try:
-        articles = MofParser(html).parse()
+    with sql_context() as session:
+        from model import Document, Act, ActType, ImportResult
+        document = get_or_create(session, Document, code=code)
 
-    except Exception, e:
-        log.exception("Failed to parse document")
-        save_import_result(document_code=name, success=False)
+        try:
+            articles = MofParser(html).parse()
 
-    else:
-        log.info("%d articles found", len(articles))
-        save_document_acts(articles, document_code=name)
-        save_import_result(document_code=name, success=True)
+        except Exception, e:
+            log.exception("Failed to parse document")
+            success = False
+
+        else:
+            log.info("%d articles found", len(articles))
+            success = True
+            document = get_or_create(session, Document, code=code)
+
+            for act in document.acts:
+                session.delete(act)
+
+            for item in articles:
+                act_type = get_or_create(session, ActType,
+                                         code=item['section'])
+                number = item.get('number')
+                act = Act(type=act_type,
+                          document=document,
+                          ident=number,
+                          title=item['title'],
+                          text=item['body'],
+                          headline=item.get('headline'))
+                session.add(act)
+                session.flush()
+                log.info("New Act %r: %s %s", act.id, act.type.code, act.ident)
+
+            document.import_time = datetime.utcnow()
+
+        session.add(ImportResult(document=document,
+                                 success=success,
+                                 time=datetime.utcnow()))
 
 
 def register_commands(manager):
