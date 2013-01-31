@@ -115,25 +115,20 @@ def do_mof_import(name, raw_html, as_json):
         print html
         return
 
+    if as_json:
+        articles = MofParser(html).parse()
+        print json.dumps(articles, indent=2, sort_keys=True)
+        return
+
     try:
         articles = MofParser(html).parse()
 
     except Exception, e:
         log.exception("Failed to parse document")
-
-        if as_json:
-            return json.dumps([])
-
-        else:
-            save_import_result(document_code=name, success=False)
+        save_import_result(document_code=name, success=False)
 
     else:
         log.info("%d articles found", len(articles))
-
-        if as_json:
-            print json.dumps(articles, indent=2, sort_keys=True)
-            return
-
         save_document_acts(articles, document_code=name)
         save_import_result(document_code=name, success=True)
 
