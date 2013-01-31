@@ -50,7 +50,7 @@ class ImportResult(Base):
 
     __tablename__ = 'import_result'
     id = sa.Column(sa.Integer, primary_key=True)
-    time = sa.Column(sa.DateTime)
+    time = sa.Column(sa.DateTime, default=sa.func.now())
     document_id = sa.Column(sa.Integer, sa.ForeignKey('documents.id'))
     document = relationship("Document", backref='import_results')
     success = sa.Column(sa.Boolean)

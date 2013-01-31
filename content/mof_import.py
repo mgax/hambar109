@@ -117,9 +117,7 @@ def do_mof_import(code, raw_html, as_json):
 
             document.import_time = datetime.utcnow()
 
-        session.add(ImportResult(document=document,
-                                 success=success,
-                                 time=datetime.utcnow()))
+        session.add(ImportResult(document=document, success=success))
 
 
 def register_commands(manager):
