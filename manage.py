@@ -8,6 +8,7 @@ from flask.ext.script import Manager
 import requests
 import harvest
 import search
+import queue
 from content import mof_import
 
 DEBUG = (os.environ.get('DEBUG') == 'on')
@@ -56,6 +57,7 @@ manager = Manager(create_app)
 harvest.register_commands(manager)
 search.register_commands(manager)
 mof_import.register_commands(manager)
+queue.register_commands(manager)
 
 
 @manager.option('-p', '--port')
