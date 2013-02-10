@@ -38,8 +38,6 @@ def create_app():
 
     app.register_blueprint(search.search_pages)
 
-    app.register_blueprint(mof_import.mof_import_views, url_prefix='/db')
-
     app.register_blueprint(api_views, url_prefix='/api')
 
     @app.route('/crashme')
