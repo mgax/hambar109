@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import logging
 from path import path
 import flask
 from flask.ext.script import Manager
@@ -9,12 +10,18 @@ import harvest
 import search
 from content import mof_import
 
+DEBUG = (os.environ.get('DEBUG') == 'on')
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
+
 
 def create_app():
     from content.model import DatabaseForFlask
     from content.api import api_views
 
     app = flask.Flask(__name__, instance_relative_config=True)
+    app.debug = DEBUG
     app.config.update({
         'STATIC_LIB_URL': 'http://grep.ro/quickpub/lib',
     })
@@ -23,8 +30,6 @@ def create_app():
                                            or app.instance_path)
     if 'PUBDOCS_ES_URL' in os.environ:
         app.config['PUBDOCS_ES_URL'] = os.environ['PUBDOCS_ES_URL']
-    if os.environ.get('DEBUG'):
-        app.debug = True
 
     DatabaseForFlask().initialize_app(app)
 
@@ -63,20 +68,19 @@ def runfcgi(port):
 
 @manager.option('-p', '--port', type=int, default=5000)
 def tornado(port):
-    app = create_app()
-    if app.debug:
-        import logging
-        logging.getLogger('werkzeug').setLevel(logging.INFO)
-        return app.run()
-
+    from tornado.web import Application, FallbackHandler
     from tornado.wsgi import WSGIContainer
     from tornado.httpserver import HTTPServer
     from tornado.ioloop import IOLoop
 
+    app = create_app()
     wsgi_container = WSGIContainer(app)
     wsgi_container._log = lambda *args, **kwargs: None
-    http_server = HTTPServer(wsgi_container)
+    handlers = [('.*', FallbackHandler, {'fallback': wsgi_container})]
+    tornado_app = Application(handlers, debug=DEBUG)
+    http_server = HTTPServer(tornado_app)
     http_server.listen(port)
+    log.info("Hambar109 Tornado listening on port %r", port)
     IOLoop.instance().start()
 
 
