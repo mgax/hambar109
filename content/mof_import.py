@@ -131,11 +131,11 @@ def register_commands(manager):
         else:
             do_mof_import(*args)
 
-    @manager.option('document_code',
-                    help="Code of document (e.g. mof1_2010_0666)")
     @manager.option('file_path', type=path,
                     help="PDF file to import")
-    def import_document(file_path, document_code):
+    @manager.option('document_code',
+                    help="Code of document (e.g. mof1_2010_0666)")
+    def import_document(document_code, file_path):
         from model import Document, Content
         with file_path.open('rb') as f:
             html = ''.join(invoke_tika(f)).decode('utf-8')
