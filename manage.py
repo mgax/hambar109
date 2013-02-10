@@ -34,6 +34,8 @@ def create_app():
 
     DatabaseForFlask().initialize_app(app)
 
+    queue.initialize(app)
+
     app.register_blueprint(search.search_pages)
 
     app.register_blueprint(mof_import.mof_import_views, url_prefix='/db')
