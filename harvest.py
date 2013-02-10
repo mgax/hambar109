@@ -6,30 +6,10 @@ import tempfile
 from functools import wraps
 from path import path
 import requests
-from celery import Celery
-from celery.signals import setup_logging, celeryd_init
 import flask
 
 
 MOF_URL = 'http://kurtyan.org/MOF/'
-
-
-celery = Celery()
-
-@celeryd_init.connect
-def configure_celery(sender=None, **extra):
-    celery.config_from_object('celeryconfig')
-
-
-@setup_logging.connect
-def configure_worker(sender=None, **extra):
-    from utils import set_up_logging
-    set_up_logging()
-
-    from content.model import DatabaseForFlask
-    app = flask.Flask(__name__)
-    DatabaseForFlask().initialize_app(app)
-    app.app_context().push() # long-running app context
 
 
 log = logging.getLogger(__name__)
@@ -98,7 +78,7 @@ def register_commands(manager):
                 skipped += 1
                 continue
 
-            download_mof.delay(file_path)
+            download_mof.delay(file_path)  # TODO no more celery
             scheduled += 1
             if scheduled >= int(limit):
                 break
@@ -116,7 +96,6 @@ def appcontext(func):
     return wrapper
 
 
-@celery.task
 @appcontext
 def download_mof(file_path, overwrite=False):
     url = MOF_URL + file_path

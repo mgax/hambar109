@@ -12,7 +12,7 @@ from path import path
 from time import time
 from tempfile import NamedTemporaryFile as NamedTempFile
 from tempfile import TemporaryFile
-from harvest import appcontext, celery
+from harvest import appcontext
 from pyquery import PyQuery as pq
 
 import utils
@@ -61,7 +61,6 @@ es = ElasticSearch(os.environ.get('PUBDOCS_ES_URL'))
 search_pages = flask.Blueprint('search', __name__, template_folder='templates')
 
 
-@celery.task
 @appcontext
 def index(file_path, debug=False):
     """ Index a file from the repositoy. """
@@ -281,7 +280,7 @@ def register_commands(manager):
                 if debug:
                     index(doc_path, debug)
                 else:
-                    index.delay(doc_path)
+                    index.delay(doc_path)  # TODO celery is gone
                 indexed += 1
                 sys.stdout.write("\r%i/%i" % (indexed, total))
                 sys.stdout.flush()

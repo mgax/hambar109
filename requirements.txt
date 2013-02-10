@@ -4,14 +4,6 @@ Flask-Script==0.5.0
 Jinja2==2.6
 Werkzeug==0.8.3
 requests==0.14.2
-amqplib==1.0.2
-anyjson==0.3.3
-billiard==2.7.3.17
-celery==3.0.11
-kombu==2.4.7
-python-dateutil==1.5
-celery-redis-unixsocket==0.2
-redis==2.6.2
 path.py==2.4
 Unidecode==0.04.9
 pyquery==1.2.1
