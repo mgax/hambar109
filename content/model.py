@@ -6,12 +6,22 @@ import sqlalchemy as sa
 Base = declarative_base()
 
 
+class Content(Base):
+
+    __tablename__ = 'content'
+    id = sa.Column(sa.Integer, primary_key=True)
+    time = sa.Column(sa.DateTime, default=sa.func.now())
+    text = sa.Column(sa.Text)
+
+
 class Document(Base):
 
     __tablename__ = 'documents'
     id = sa.Column(sa.Integer, primary_key=True)
     code = sa.Column(sa.String)
     import_time = sa.Column(sa.DateTime)
+    content_id = sa.Column(sa.Integer, sa.ForeignKey('content.id'))
+    content = relationship('Content')
 
 
 class ActType(Base):
@@ -40,7 +50,7 @@ class ImportResult(Base):
 
     __tablename__ = 'import_result'
     id = sa.Column(sa.Integer, primary_key=True)
-    time = sa.Column(sa.DateTime)
+    time = sa.Column(sa.DateTime, default=sa.func.now())
     document_id = sa.Column(sa.Integer, sa.ForeignKey('documents.id'))
     document = relationship("Document", backref='import_results')
     success = sa.Column(sa.Boolean)

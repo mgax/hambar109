@@ -7,30 +7,17 @@ from collections import defaultdict
 from path import path
 import simplejson as json
 import flask
+from flask.ext.script import Manager
 from .tika import invoke_tika
 from .mof_parser import MofParser
 
+DEBUG_IMPORT = (os.environ.get('DEBUG_IMPORT') == 'on')
+
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG if DEBUG_IMPORT else logging.INFO)
 
-
-def all_files(directory):
-    for item in directory.listdir():
-        if item.isdir():
-            for subitem in all_files(item):
-                yield subitem
-        elif item.isfile():
-            yield item
-
-
-def find_mof(name):
-    mof_dir = path(os.environ['MOF_DIR']).abspath()
-    for item in all_files(mof_dir):
-        if item.name == name + '.pdf':
-            return item
-    else:
-        raise KeyError("Can't find MOF %r" % name)
+manager = Manager()
 
 
 @contextmanager
@@ -65,150 +52,111 @@ def get_or_create(session, cls, **kwargs):
     return row
 
 
-def save_document_acts(acts, document_code):
-    from model import Act, ActType, Document
+def do_mof_import(code, raw_html, as_json):
+    from model import Document, Act, ActType, ImportResult
 
     with sql_context() as session:
-        document_row = get_or_create(session, Document, code=document_code)
+        document = session.query(Document).filter_by(code=code).first()
+        if document is None or document.content is None:
+            raise RuntimeError("Document text for %r not in database" % code)
+        html = document.content.text.encode('utf-8')
 
-        for act_row in document_row.acts:
-            session.delete(act_row)
+        log.info("Parsing %s", code)
 
-        for item in acts:
-            act_type_row = get_or_create(session, ActType,
+        if raw_html:
+            print html
+            return
+
+        if as_json:
+            articles = MofParser(html).parse()
+            print json.dumps(articles, indent=2, sort_keys=True)
+            return
+
+        try:
+            articles = MofParser(html).parse()
+
+        except Exception, e:
+            log.exception("Failed to parse document")
+            success = False
+
+        else:
+            log.info("%d articles found", len(articles))
+            success = True
+            document = get_or_create(session, Document, code=code)
+
+            for act in document.acts:
+                session.delete(act)
+
+            for item in articles:
+                act_type = get_or_create(session, ActType,
                                          code=item['section'])
-            number = item.get('number')
-            act_row = Act(type=act_type_row,
-                          document=document_row,
+                number = item.get('number')
+                act = Act(type=act_type,
+                          document=document,
                           ident=number,
                           title=item['title'],
                           text=item['body'],
                           headline=item.get('headline'))
-            session.add(act_row)
-            session.flush()
-            log.info("New Act record %r: %s %s",
-                     act_row.id, act_row.type.code, act_row.ident)
+                session.add(act)
+                session.flush()
+                log.info("New Act %r: %s %s", act.id, act.type.code, act.ident)
 
-        document_row.import_time = datetime.utcnow()
+            document.import_time = datetime.utcnow()
+
+        session.add(ImportResult(document=document, success=success))
 
 
-def save_import_result(document_code, success):
-    from model import Document, ImportResult
+@manager.option('-r', '--raw-html', action='store_true',
+                help="Print unparsed HTML")
+@manager.option('-j', '--as-json', action='store_true',
+                help="Print as json")
+@manager.option('name', help="Name of document to be loaded")
+@manager.option('-w', '--as-worker', action='store_true',
+                help="Run as worker task")
+def mof_import(name, raw_html=False, as_json=False, as_worker=False):
+    import harvest
+    harvest.configure_celery()
+    if name == '-':
+        for line in sys.stdin:
+            mof_import(line.strip(), raw_html, as_json, as_worker)
+        return
+
+    if name.endswith('.pdf'):
+        name = name.rsplit('.', 1)[0]
+
+    args = (name, raw_html, as_json)
+
+    if as_worker:
+        do_mof_import.delay(*args)  # TODO no more celery
+
+    else:
+        do_mof_import(*args)
+
+
+@manager.option('file_path', type=path,
+                help="PDF file to import")
+@manager.option('document_code',
+                help="Code of document (e.g. mof1_2010_0666)")
+def document(document_code, file_path):
+    from model import Document, Content
+    with file_path.open('rb') as f:
+        html = ''.join(invoke_tika(f)).decode('utf-8')
 
     with sql_context() as session:
         document_row = get_or_create(session, Document, code=document_code)
-        result_row = ImportResult(document=document_row,
-                                  success=success,
-                                  time=datetime.utcnow())
-        session.add(result_row)
+        session.add(document_row)
+        if document_row.content is not None:
+            log.debug("Deleting old content version id=%d",
+                      document_row.content.id)
+            session.delete(document_row.content)
+        document_row.content = Content(text=html)
+        session.flush()
+        log.debug("New version saved id=%d", document_row.content.id)
 
 
-def do_mof_import(name, raw_html, as_json):
-    pdf_path = find_mof(name)
-
-    log.info("Importing pdf %s", pdf_path)
-
-    with pdf_path.open('rb') as pdf_file:
-        html = ''.join(invoke_tika(pdf_file))
-
-    if raw_html:
-        print html
-        return
-
-    try:
-        articles = MofParser(html).parse()
-
-    except Exception, e:
-        log.exception("Failed to parse document")
-
-        if as_json:
-            return json.dumps([])
-
-        else:
-            save_import_result(document_code=name, success=False)
-
-    else:
-        log.info("%d articles found", len(articles))
-
-        if as_json:
-            print json.dumps(articles, indent=2, sort_keys=True)
-            return
-
-        save_document_acts(articles, document_code=name)
-        save_import_result(document_code=name, success=True)
-
-
-def register_commands(manager):
-
-    @manager.option('-r', '--raw-html', action='store_true',
-                    help="Print unparsed HTML")
-    @manager.option('-j', '--as-json', action='store_true',
-                    help="Print as json")
-    @manager.option('name', help="Name of document to be loaded")
-    @manager.option('-w', '--as-worker', action='store_true',
-                    help="Run as worker task")
-    def mof_import(name, raw_html=False, as_json=False, as_worker=False):
-        import harvest
-        harvest.configure_celery()
-        if name == '-':
-            for line in sys.stdin:
-                mof_import(line.strip(), raw_html, as_json, as_worker)
-            return
-
-        if name.endswith('.pdf'):
-            name = name.rsplit('.', 1)[0]
-
-        args = (name, raw_html, as_json)
-
-        if as_worker:
-            do_mof_import.delay(*args)  # TODO no more celery
-
-        else:
-            do_mof_import(*args)
-
-
-mof_import_views = flask.Blueprint('mof_import', __name__,
-                                   template_folder='templates')
-
-@mof_import_views.before_request
-def prepare_db_session():
-    flask.g.dbsession = flask.current_app.extensions['hambar-db'].session
-
-
-@mof_import_views.route('/import_stats')
-def import_stats():
-    from .model import Document
-    counts = defaultdict(int)
-    for doc in flask.g.dbsession.query(Document):
-        counts['total'] += 1
-        n_acts = len(doc.acts)
-        if n_acts:
-            counts['success'] += 1
-            counts['acts'] += n_acts
-    return flask.render_template('import_stats.html', **{
-        'counts': dict(counts),
-    })
-
-
-@mof_import_views.route('/import_results')
-def import_results():
-    from .model import ImportResult
-    return flask.render_template('mof_import_status.html', **{
-        'import_results': flask.g.dbsession.query(ImportResult),
-    })
-
-
-@mof_import_views.route('/documents/')
-def document_list():
-    from .model import Document
-    return flask.render_template('document_list.html', **{
-        'all_documents': flask.g.dbsession.query(Document),
-    })
-
-
-@mof_import_views.route('/documents/<string:document_id>')
-def document(document_id):
-    from .model import Document
-    return flask.render_template('document.html', **{
-        'document': flask.g.dbsession.query(Document).get(document_id),
-    })
+@manager.command
+def many_documents():
+    from queue import enqueue
+    for line in sys.stdin:
+        (document_code, file_path) = line.strip().split(None, 1)
+        enqueue(document, document_code, path(file_path))
