@@ -23,24 +23,31 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-def es_search(text, fields=None, page=1, per_page=20):
-    es_url = flask.current_app.config['PUBDOCS_ES_URL']
-    search_data = {
-        "fields": ["title"],
-        "query": {
-            "query_string": {"query": text},
-        },
-        "highlight": {
-            "fields": {"file": {}},
-        },
-    }
-    search_url = es_url + '/_search'
-    search_url += '?from=%d&size=%d' % ((page - 1) * per_page, per_page)
-    if fields is not None:
-        search_url += '&fields=' + ','.join(fields)
-    search_resp = requests.get(search_url, data=flask.json.dumps(search_data))
-    assert search_resp.status_code == 200, repr(search_resp)
-    return search_resp.json
+class ElasticSearch(object):
+
+    def __init__(self, api_url):
+        self.api_url = api_url
+
+    def search(self, text, fields=None, page=1, per_page=20):
+        search_data = {
+            "fields": ["title"],
+            "query": {
+                "query_string": {"query": text},
+            },
+            "highlight": {
+                "fields": {"file": {}},
+            },
+        }
+        search_url = self.api_url + '/_search'
+        search_url += '?from=%d&size=%d' % ((page - 1) * per_page, per_page)
+        if fields is not None:
+            search_url += '&fields=' + ','.join(fields)
+        search_resp = requests.get(search_url, data=flask.json.dumps(search_data))
+        assert search_resp.status_code == 200, repr(search_resp)
+        return search_resp.json
+
+
+es = ElasticSearch(os.environ.get('PUBDOCS_ES_URL'))
 
 
 search_pages = flask.Blueprint('search', __name__, template_folder='templates')
@@ -156,7 +163,7 @@ def search():
     q = args.get('q')
     if q:
         page = args.get('page', 1, type=int)
-        results = es_search(q, ['year', 'section', 'path'], page=page)
+        results = es.search(q, ['year', 'section', 'path'], page=page)
         next_url = flask.url_for('.search', page=page + 1, q=q)
 
     else:
@@ -240,7 +247,7 @@ def register_commands(manager):
     @manager.command
     def search(text):
         """ Search the index. """
-        print flask.json.dumps(es_search(text), indent=2)
+        print flask.json.dumps(es.search(text), indent=2)
 
     @manager.option('-d', '--debug', action='store_true')
     @manager.option('-p', '--path')
