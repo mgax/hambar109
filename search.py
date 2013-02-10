@@ -19,8 +19,10 @@ import utils
 from html2text import html2text
 from content.tika import invoke_tika
 
+DEBUG_SEARCH = (os.environ.get('DEBUG_SEARCH') == 'on')
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG if DEBUG_SEARCH else logging.INFO)
 
 
 class ElasticSearch(object):
@@ -42,7 +44,13 @@ class ElasticSearch(object):
         search_url += '?from=%d&size=%d' % ((page - 1) * per_page, per_page)
         if fields is not None:
             search_url += '&fields=' + ','.join(fields)
-        search_resp = requests.get(search_url, data=flask.json.dumps(search_data))
+        search_json = flask.json.dumps(search_data,
+                                       indent=2 if DEBUG_SEARCH else None)
+        log.debug("search: %s", search_json)
+        search_resp = requests.get(search_url, data=search_json)
+        if search_resp.status_code != 200:
+            log.error("Error response: %r", search_resp.text)
+            raise RuntimeError("ElasticSearch query failed")
         assert search_resp.status_code == 200, repr(search_resp)
         return search_resp.json
 
