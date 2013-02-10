@@ -58,7 +58,7 @@ manager = Manager(create_app)
 
 harvest.register_commands(manager)
 search.register_commands(manager)
-mof_import.register_commands(manager)
+manager.add_command('import', mof_import.manager)
 manager.add_command('queue', queue.manager)
 
 

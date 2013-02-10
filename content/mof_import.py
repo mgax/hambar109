@@ -7,6 +7,7 @@ from collections import defaultdict
 from path import path
 import simplejson as json
 import flask
+from flask.ext.script import Manager
 from .tika import invoke_tika
 from .mof_parser import MofParser
 
@@ -15,6 +16,8 @@ DEBUG_IMPORT = (os.environ.get('DEBUG_IMPORT') == 'on')
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG if DEBUG_IMPORT else logging.INFO)
+
+manager = Manager()
 
 
 @contextmanager
@@ -103,53 +106,51 @@ def do_mof_import(code, raw_html, as_json):
         session.add(ImportResult(document=document, success=success))
 
 
-def register_commands(manager):
+@manager.option('-r', '--raw-html', action='store_true',
+                help="Print unparsed HTML")
+@manager.option('-j', '--as-json', action='store_true',
+                help="Print as json")
+@manager.option('name', help="Name of document to be loaded")
+@manager.option('-w', '--as-worker', action='store_true',
+                help="Run as worker task")
+def mof_import(name, raw_html=False, as_json=False, as_worker=False):
+    import harvest
+    harvest.configure_celery()
+    if name == '-':
+        for line in sys.stdin:
+            mof_import(line.strip(), raw_html, as_json, as_worker)
+        return
 
-    @manager.option('-r', '--raw-html', action='store_true',
-                    help="Print unparsed HTML")
-    @manager.option('-j', '--as-json', action='store_true',
-                    help="Print as json")
-    @manager.option('name', help="Name of document to be loaded")
-    @manager.option('-w', '--as-worker', action='store_true',
-                    help="Run as worker task")
-    def mof_import(name, raw_html=False, as_json=False, as_worker=False):
-        import harvest
-        harvest.configure_celery()
-        if name == '-':
-            for line in sys.stdin:
-                mof_import(line.strip(), raw_html, as_json, as_worker)
-            return
+    if name.endswith('.pdf'):
+        name = name.rsplit('.', 1)[0]
 
-        if name.endswith('.pdf'):
-            name = name.rsplit('.', 1)[0]
+    args = (name, raw_html, as_json)
 
-        args = (name, raw_html, as_json)
+    if as_worker:
+        do_mof_import.delay(*args)  # TODO no more celery
 
-        if as_worker:
-            do_mof_import.delay(*args)  # TODO no more celery
+    else:
+        do_mof_import(*args)
 
-        else:
-            do_mof_import(*args)
+@manager.option('file_path', type=path,
+                help="PDF file to import")
+@manager.option('document_code',
+                help="Code of document (e.g. mof1_2010_0666)")
+def document(document_code, file_path):
+    from model import Document, Content
+    with file_path.open('rb') as f:
+        html = ''.join(invoke_tika(f)).decode('utf-8')
 
-    @manager.option('file_path', type=path,
-                    help="PDF file to import")
-    @manager.option('document_code',
-                    help="Code of document (e.g. mof1_2010_0666)")
-    def import_document(document_code, file_path):
-        from model import Document, Content
-        with file_path.open('rb') as f:
-            html = ''.join(invoke_tika(f)).decode('utf-8')
-
-        with sql_context() as session:
-            document_row = get_or_create(session, Document, code=document_code)
-            session.add(document_row)
-            if document_row.content is not None:
-                log.debug("Deleting old content version id=%d",
-                          document_row.content.id)
-                session.delete(document_row.content)
-            document_row.content = Content(text=html)
-            session.flush()
-            log.debug("New version saved id=%d", document_row.content.id)
+    with sql_context() as session:
+        document_row = get_or_create(session, Document, code=document_code)
+        session.add(document_row)
+        if document_row.content is not None:
+            log.debug("Deleting old content version id=%d",
+                      document_row.content.id)
+            session.delete(document_row.content)
+        document_row.content = Content(text=html)
+        session.flush()
+        log.debug("New version saved id=%d", document_row.content.id)
 
 
 mof_import_views = flask.Blueprint('mof_import', __name__,
