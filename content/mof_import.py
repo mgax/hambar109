@@ -10,9 +10,11 @@ import flask
 from .tika import invoke_tika
 from .mof_parser import MofParser
 
+DEBUG_IMPORT = (os.environ.get('DEBUG_IMPORT') == 'on')
+
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG if DEBUG_IMPORT else logging.INFO)
 
 
 @contextmanager
@@ -142,8 +144,12 @@ def register_commands(manager):
             document_row = get_or_create(session, Document, code=document_code)
             session.add(document_row)
             if document_row.content is not None:
+                log.debug("Deleting old content version id=%d",
+                          document_row.content.id)
                 session.delete(document_row.content)
             document_row.content = Content(text=html)
+            session.flush()
+            log.debug("New version saved id=%d", document_row.content.id)
 
 
 mof_import_views = flask.Blueprint('mof_import', __name__,
