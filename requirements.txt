@@ -21,3 +21,4 @@ redis==2.7.2
 rq==0.3.5
 six==1.2.0
 times==0.6
+rq-dashboard==0.3.1
