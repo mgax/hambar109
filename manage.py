@@ -8,6 +8,7 @@ from flask.ext.script import Manager
 import requests
 import harvest
 import search
+import queue
 from content import mof_import
 
 DEBUG = (os.environ.get('DEBUG') == 'on')
@@ -33,6 +34,8 @@ def create_app():
 
     DatabaseForFlask().initialize_app(app)
 
+    queue.initialize(app)
+
     app.register_blueprint(search.search_pages)
 
     app.register_blueprint(mof_import.mof_import_views, url_prefix='/db')
@@ -56,6 +59,7 @@ manager = Manager(create_app)
 harvest.register_commands(manager)
 search.register_commands(manager)
 mof_import.register_commands(manager)
+manager.add_command('queue', queue.manager)
 
 
 @manager.option('-p', '--port')

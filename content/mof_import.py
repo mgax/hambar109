@@ -9,7 +9,6 @@ import simplejson as json
 import flask
 from .tika import invoke_tika
 from .mof_parser import MofParser
-from harvest import celery
 
 
 log = logging.getLogger(__name__)
@@ -104,7 +103,6 @@ def save_import_result(document_code, success):
         session.add(result_row)
 
 
-@celery.task
 def do_mof_import(name, raw_html, as_json):
     pdf_path = find_mof(name)
 
@@ -163,7 +161,7 @@ def register_commands(manager):
         args = (name, raw_html, as_json)
 
         if as_worker:
-            do_mof_import.delay(*args)
+            do_mof_import.delay(*args)  # TODO no more celery
 
         else:
             do_mof_import(*args)
