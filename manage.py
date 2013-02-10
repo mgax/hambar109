@@ -59,7 +59,7 @@ manager = Manager(create_app)
 harvest.register_commands(manager)
 search.register_commands(manager)
 mof_import.register_commands(manager)
-queue.register_commands(manager)
+manager.add_command('queue', queue.manager)
 
 
 @manager.option('-p', '--port')

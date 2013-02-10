@@ -1,7 +1,11 @@
 import os
 import flask
+from flask.ext.script import Manager
 from redis import Redis
 from rq import Worker, Queue, Connection
+
+
+manager = Manager()
 
 
 def _create_connection():
@@ -17,11 +21,10 @@ def enqueue(func, *args, **kwargs):
     return q.enqueue(func, *args, **kwargs)
 
 
-def register_commands(manager):
-    @manager.command
-    def worker():
-        listen = ['default']
-        conn = _create_connection()
-        with Connection(conn):
-            worker = Worker(map(Queue, listen))
-            worker.work()
+@manager.command
+def run():
+    listen = ['default']
+    conn = _create_connection()
+    with Connection(conn):
+        worker = Worker(map(Queue, listen))
+        worker.work()
