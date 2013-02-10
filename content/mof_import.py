@@ -132,6 +132,7 @@ def mof_import(name, raw_html=False, as_json=False, as_worker=False):
     else:
         do_mof_import(*args)
 
+
 @manager.option('file_path', type=path,
                 help="PDF file to import")
 @manager.option('document_code',
@@ -151,3 +152,11 @@ def document(document_code, file_path):
         document_row.content = Content(text=html)
         session.flush()
         log.debug("New version saved id=%d", document_row.content.id)
+
+
+@manager.command
+def many_documents():
+    from queue import enqueue
+    for line in sys.stdin:
+        (document_code, file_path) = line.strip().split(None, 1)
+        enqueue(document, document_code, path(file_path))
