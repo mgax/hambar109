@@ -47,24 +47,3 @@
   {% endif %}
 
 {% endblock %}
-
-
-{% block scripts %}
-<script src="{{ url_for('static', filename=("lib/"
-  "infinite-scroll-2.0b.110415/jquery.infinitescroll.min.js")) }}"></script>
-<script>
-$(document).ready(function() {
-
-    $('.pd-search-results').infinitescroll({
-        navSelector: '.pd-navigation',
-        nextSelector: '.pd-navigation a:first',
-        itemSelector: '.pd-search-results > li',
-        loading: {
-            msgText: "Se încarcă rezultate...",
-            finishedMsg: "Nu mai sunt rezultate."
-        }
-    });
-
-});
-</script>
-{% endblock %}
