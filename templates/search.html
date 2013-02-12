@@ -25,7 +25,7 @@
 
             {% if 'highlight' in hit %}
               {% for fragment in hit['highlight']['content'] %}
-                <p>{{ fragment|safe }}</p>
+                <p>{{ fragment|truncate|safe }}</p>
               {% endfor %}
             {% endif %}
 
