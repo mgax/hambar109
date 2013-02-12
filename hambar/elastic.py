@@ -36,3 +36,13 @@ class ElasticSearch(object):
             raise RuntimeError("ElasticSearch query failed")
         assert search_resp.status_code == 200, repr(search_resp)
         return search_resp.json
+
+    def index_document(self, doc):
+        put_url = self.api_url + '/hambar109/document/' + doc.code
+        data_json = json.dumps({
+            'content': doc.content.text,
+        })
+        resp = requests.put(put_url, data=data_json)
+        if resp.status_code not in [200, 201]:
+            log.eror("Error while indexing %s: %r", doc.code, search_resp.text)
+            raise RuntimeError("ElasticSearch indexing failed")
