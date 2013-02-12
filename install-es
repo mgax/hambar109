@@ -22,7 +22,7 @@ def main():
         print '%s already exists' % prefix
         return
 
-    tmp = path(tempfile.gettempdir())
+    tmp = path(tempfile.mkdtemp())
     try:
         check_call("curl -L '%s' | tar xzf -" % (ES_DOWNLOAD_URL,),
                    shell=True, cwd=tmp)
