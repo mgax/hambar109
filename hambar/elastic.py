@@ -2,6 +2,8 @@ import os
 import logging
 import requests
 import simplejson as json
+from jinja2.filters import do_striptags
+
 
 DEBUG_SEARCH = (os.environ.get('DEBUG_SEARCH') == 'on')
 
@@ -40,7 +42,7 @@ class ElasticSearch(object):
     def index_document(self, doc):
         put_url = self.api_url + '/hambar109/document/' + doc.code
         data_json = json.dumps({
-            'content': doc.content.text,
+            'content': do_striptags(doc.content.text),
         })
         resp = requests.put(put_url, data=data_json)
         if resp.status_code not in [200, 201]:
