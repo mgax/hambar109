@@ -18,12 +18,15 @@ class ElasticSearch(object):
 
     def search(self, text, fields=None, page=1, per_page=20):
         search_data = {
-            "fields": ["title"],
             "query": {
-                "query_string": {"query": text},
+                "query_string": {
+                    "query": text,
+                },
             },
             "highlight": {
-                "fields": {"file": {}},
+                "fields": {
+                    "content": {},
+                },
             },
         }
         search_url = self.api_url + '/_search'
