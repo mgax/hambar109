@@ -13,8 +13,7 @@ REDIS_VAR = SARGE_HOME / 'var' / 'pubdocs-redis'
 ES_KIT = ('http://download.elasticsearch.org/elasticsearch/'
           'elasticsearch/elasticsearch-0.20.4.tar.gz')
 PUBDOCS_VENV = SARGE_HOME / 'var' / 'pubdocs-venv'
-PUBDOCS_ES_BIN = (SARGE_HOME / 'var' / 'pubdocs-es' /
-                  'elasticsearch-0.20.4' / 'bin')
+PUBDOCS_ES_PREFIX = (SARGE_HOME / 'var' / 'es')
 PUBDOCS_TIKA_URL = 'http://www.eu.apache.org/dist/tika/tika-app-1.2.jar'
 
 PUBDOCS_CONFIG = {
@@ -26,10 +25,10 @@ PUBDOCS_CONFIG = {
     'PUBDOCS_FILE_REPO': SARGE_HOME / 'var' / 'pubdocs-file-repo',
     'PUBDOCS_LINKS': '/home/alexm/links.txt',
     'ES_HEAP_SIZE': '256m',
-    'ES_PATH_DATA': SARGE_HOME / 'var' / 'pubdocs-es-data',
+    'ES_DATA': SARGE_HOME / 'var' / 'es-data',
     'PUBDOCS_ES_URL': 'http://localhost:27302',
     'PUBDOCS_VENV': PUBDOCS_VENV,
-    'PUBDOCS_ES_BIN': PUBDOCS_ES_BIN,
+    'PUBDOCS_ES_PREFIX': PUBDOCS_ES_PREFIX,
     'PYTHONPATH': '.',
     'PUBDOCS_TIKA_PORT': '27303',
     'PUBDOCS_TIKA_JAR': PUBDOCS_VENV / 'tika-app-1.2.jar',
@@ -47,8 +46,8 @@ env.update({
     'pubdocs_redis_var': REDIS_VAR,
     'pubdocs_es': SARGE_HOME / 'var' / 'pubdocs-es',
     'pubdocs_es_kit': ES_KIT,
-    'pubdocs_es_bin': PUBDOCS_ES_BIN,
-    'pubdocs_es_data': PUBDOCS_CONFIG['ES_PATH_DATA'],
+    'pubdocs_es_prefix': PUBDOCS_ES_PREFIX,
+    'pubdocs_es_data': PUBDOCS_CONFIG['ES_DATA'],
     'pubdocs_tika_url': PUBDOCS_TIKA_URL,
 })
 

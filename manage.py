@@ -9,7 +9,7 @@ import requests
 import harvest
 import search
 import queue
-from content import mof_import
+from hambar import mof_import
 
 DEBUG = (os.environ.get('DEBUG') == 'on')
 
@@ -18,8 +18,8 @@ log.setLevel(logging.INFO)
 
 
 def create_app():
-    from content.model import DatabaseForFlask
-    from content.api import api_views
+    from hambar.model import DatabaseForFlask
+    from hambar.api import api_views
 
     app = flask.Flask(__name__, instance_relative_config=True)
     app.debug = DEBUG

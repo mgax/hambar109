@@ -7,7 +7,7 @@ from util import db_session, configure_memory_db
 class ApiTest(unittest.TestCase):
 
     def setUp(self):
-        from content.api import api_views
+        from hambar.api import api_views
         self.app = flask.Flask(__name__)
 
         configure_memory_db(self.app)
@@ -20,7 +20,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 404)
 
     def test_api_returns_200_if_document_is_found(self):
-        from content.model import Document
+        from hambar.model import Document
         with db_session(self.app) as session:
             session.add(Document(code='mof1_2007_0123'))
 
@@ -28,7 +28,7 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
 
     def test_api_returns_act_information(self):
-        from content.model import Document, Act, ActType
+        from hambar.model import Document, Act, ActType
         with db_session(self.app) as session:
             council = ActType(code='counc', label="Revolutionary council")
             doc = Document(code='mof1_2007_0123')

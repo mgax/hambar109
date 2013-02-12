@@ -10,8 +10,8 @@ class ImportTest(unittest.TestCase):
         configure_memory_db(self.app)
 
     def test_document_is_created_on_save(self):
-        from content.mof_import import save_document_acts
-        from content.model import Document
+        from hambar.mof_import import save_document_acts
+        from hambar.model import Document
 
         with self.app.app_context():
             save_document_acts([], 'mof1_2007_0123')
@@ -21,8 +21,8 @@ class ImportTest(unittest.TestCase):
             self.assertEqual(doc.code, 'mof1_2007_0123')
 
     def test_act_is_created_on_save(self):
-        from content.mof_import import save_document_acts
-        from content.model import Document
+        from hambar.mof_import import save_document_acts
+        from hambar.model import Document
 
         acts = [{
             'section': 'hg',

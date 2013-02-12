@@ -10,7 +10,7 @@ def db_session(app):
 
 
 def configure_memory_db(app):
-    from content.model import Base, DatabaseForFlask
+    from hambar.model import Base, DatabaseForFlask
     app.config['DATABASE'] = 'sqlite:///:memory:'
     DatabaseForFlask().initialize_app(app)
     with db_session(app) as session:
