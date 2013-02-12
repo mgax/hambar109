@@ -1,3 +1,4 @@
+import sys
 import os
 from flask.ext.script import Manager
 from .mof_import import sql_context
@@ -18,3 +19,11 @@ def document(document_code):
         if doc is None:
             raise RuntimeError("Document %r not found" % document_code)
         es.index_document(doc)
+
+
+@manager.command
+def many_documents():
+    from queue import enqueue
+    for line in sys.stdin:
+        document_code = line.strip()
+        enqueue(document, document_code)
