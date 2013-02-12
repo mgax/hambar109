@@ -10,6 +10,7 @@ import harvest
 import search
 import queue
 from hambar import mof_import
+from hambar import mof_index
 
 DEBUG = (os.environ.get('DEBUG') == 'on')
 
@@ -57,6 +58,7 @@ manager = Manager(create_app)
 harvest.register_commands(manager)
 search.register_commands(manager)
 manager.add_command('import', mof_import.manager)
+manager.add_command('index', mof_index.manager)
 manager.add_command('queue', queue.manager)
 
 
