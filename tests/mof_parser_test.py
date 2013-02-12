@@ -1,7 +1,7 @@
 # encoding: utf-8
 import unittest
 from path import path
-from content.mof_parser import preprocess, MofParser
+from hambar.mof_parser import preprocess, MofParser
 
 
 DATA = path(__file__).abspath().parent / 'mof_parser_data'

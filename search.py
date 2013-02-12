@@ -17,7 +17,7 @@ from pyquery import PyQuery as pq
 
 import utils
 from html2text import html2text
-from content.tika import invoke_tika
+from hambar.tika import invoke_tika
 
 DEBUG_SEARCH = (os.environ.get('DEBUG_SEARCH') == 'on')
 
