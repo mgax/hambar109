@@ -24,9 +24,7 @@
             <h4>{{ hit['_id'] }}</h4>
 
             {% if 'highlight' in hit %}
-              {% for fragment in hit['highlight']['content'] %}
-                <p>{{ fragment|truncate|safe }}</p>
-              {% endfor %}
+              <p>{{ hit['highlight']['content']|format_highlight }}</p>
             {% endif %}
 
           </li>

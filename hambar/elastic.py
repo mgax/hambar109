@@ -26,7 +26,10 @@ class ElasticSearch(object):
             },
             "highlight": {
                 "fields": {
-                    "content": {},
+                    "content": {
+                        "fragment_size": 150,
+                        "number_of_fragments": 3,
+                    },
                 },
             },
         }

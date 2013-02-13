@@ -14,6 +14,8 @@ from tempfile import NamedTemporaryFile as NamedTempFile
 from tempfile import TemporaryFile
 from harvest import appcontext
 from pyquery import PyQuery as pq
+from jinja2 import Markup
+from jinja2.filters import do_truncate
 
 import utils
 from html2text import html2text
@@ -132,6 +134,11 @@ def clean(file_path, debug, year=None):
                 else:
                     chars_debug(match, text, True)
         return text
+
+
+@search_pages.app_template_filter('format_highlight')
+def format_highlight(highlights):
+    return Markup(' [...] '.join(do_truncate(h) for h in highlights))
 
 
 @search_pages.route('/')
