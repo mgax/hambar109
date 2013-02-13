@@ -12,6 +12,9 @@ import queue
 from hambar import mof_import
 from hambar import mof_index
 
+
+LOG_FORMAT = "[%(asctime)s] %(name)s %(levelname)s %(message)s"
+
 DEBUG = (os.environ.get('DEBUG') == 'on')
 
 log = logging.getLogger(__name__)
@@ -89,6 +92,5 @@ def tornado(port):
 
 
 if __name__ == '__main__':
-    from utils import set_up_logging
-    set_up_logging()
+    logging.basicConfig(format=LOG_FORMAT)
     manager.run()
