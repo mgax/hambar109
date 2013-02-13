@@ -57,5 +57,5 @@ class ElasticSearch(object):
         })
         resp = requests.put(put_url, data=data_json)
         if resp.status_code not in [200, 201]:
-            log.eror("Error while indexing %s: %r", doc.code, search_resp.text)
+            log.error("Error while indexing %s: %r", doc.code, resp.text)
             raise RuntimeError("ElasticSearch indexing failed")
