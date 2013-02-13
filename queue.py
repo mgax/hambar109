@@ -3,6 +3,8 @@ import flask
 from flask.ext.script import Manager
 from redis import Redis
 from rq import Worker, Queue, Connection
+from rq.contrib.sentry import register_sentry
+from raven import Client
 
 
 manager = Manager()
@@ -23,8 +25,12 @@ def enqueue(func, *args, **kwargs):
 
 @manager.command
 def run():
+    SENTRY_DSN = os.environ.get('SENTRY_DSN')
     listen = ['default']
     conn = _create_connection()
     with Connection(conn):
         worker = Worker(map(Queue, listen))
+        if SENTRY_DSN:
+            client = Client(SENTRY_DSN)
+            register_sentry(client, worker)
         worker.work()
