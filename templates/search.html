@@ -21,25 +21,31 @@
   <div class="row">
     <div class="span12">
 
-        <p>{{ results['hits']['total'] }} hits</p>
+      <p>{{ results['hits']['total'] }} hits</p>
 
-        <ul class="pd-search-results">
-        {% for hit in results['hits']['hits'] %}
-          <li>
+      <ul class="pd-search-results">
+      {% for hit in results['hits']['hits'] %}
+        <li>
 
-            <h4>{{ hit['_id'] }}</h4>
+          {% set code = hit['_id'] %}
+          {% set text_url = url_for('.document_text', document_code=code) %}
+          {% set pdf_url = mof_pdf_url(code) %}
+          <h4>
+            <a href="{{ text_url }}">{{ code }}</a>
+            {% if pdf_url %}[<a href="{{ pdf_url }}">pdf</a>]{% endif %}
+          </h4>
 
-            {% if 'highlight' in hit %}
-              <p>{{ hit['highlight']['content']|format_highlight }}</p>
-            {% endif %}
+          {% if 'highlight' in hit %}
+            <p>{{ hit['highlight']['content']|format_highlight }}</p>
+          {% endif %}
 
-          </li>
-        {% endfor %}
-        </ul>
+        </li>
+      {% endfor %}
+      </ul>
 
-        <p class="pd-navigation">
-          <a href="{{ next_url|safe }}">next</a>
-        </p>
+      <p class="pd-navigation">
+        <a href="{{ next_url|safe }}">next</a>
+      </p>
 
     </div>
   </div>

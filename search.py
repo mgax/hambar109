@@ -160,9 +160,26 @@ def search():
         'next_url': next_url,
     })
 
+
+def _mof_pdf_url(code):
+    try:
+        section, year, _ = code.split('_', 2)
+    except:
+        return None
+    return '/files/MOF/{0}/{1}/{2}.pdf'.format(section.upper(), year, code)
+
+
+@search_pages.context_processor
+def inject_mof_pdf_url():
+    return {
+        'mof_pdf_url': _mof_pdf_url,
+    }
+
+
 @search_pages.route('/stats')
 def stats():
     return flask.render_template('stats.html')
+
 
 @search_pages.route('/stats_json/<int:year>')
 @search_pages.route('/stats_json')
@@ -174,6 +191,16 @@ def stats_json(year=None):
         with_files=True
     tree = construct_tree(dir_path, with_files)
     return flask.jsonify(tree)
+
+
+@search_pages.route('/document/<document_code>')
+def document_text(document_code):
+    from hambar.model import Document
+    session = flask.current_app.extensions['hambar-db'].session
+    doc = session.query(Document).filter_by(code=document_code).first()
+    if doc is None:
+        flask.abort(404)
+    return doc.content.text
 
 
 def construct_tree(fs_path, with_files=False):
