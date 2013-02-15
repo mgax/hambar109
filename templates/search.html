@@ -29,7 +29,11 @@
 
           {% set code = hit['_id'] %}
           {% set text_url = url_for('.document_text', document_code=code) %}
-          <h4><a href="{{ text_url }}">{{ code }}</a></h4>
+          {% set pdf_url = mof_pdf_url(code) %}
+          <h4>
+            <a href="{{ text_url }}">{{ code }}</a>
+            {% if pdf_url %}[<a href="{{ pdf_url }}">pdf</a>]{% endif %}
+          </h4>
 
           {% if 'highlight' in hit %}
             <p>{{ hit['highlight']['content']|format_highlight }}</p>

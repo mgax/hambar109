@@ -160,9 +160,26 @@ def search():
         'next_url': next_url,
     })
 
+
+def _mof_pdf_url(code):
+    try:
+        section, year, _ = code.split('_', 2)
+    except:
+        return None
+    return '/files/MOF/{0}/{1}/{2}.pdf'.format(section.upper(), year, code)
+
+
+@search_pages.context_processor
+def inject_mof_pdf_url():
+    return {
+        'mof_pdf_url': _mof_pdf_url,
+    }
+
+
 @search_pages.route('/stats')
 def stats():
     return flask.render_template('stats.html')
+
 
 @search_pages.route('/stats_json/<int:year>')
 @search_pages.route('/stats_json')
