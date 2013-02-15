@@ -176,6 +176,16 @@ def stats_json(year=None):
     return flask.jsonify(tree)
 
 
+@search_pages.route('/document/<document_code>')
+def document_text(document_code):
+    from hambar.model import Document
+    session = flask.current_app.extensions['hambar-db'].session
+    doc = session.query(Document).filter_by(code=document_code).first()
+    if doc is None:
+        flask.abort(404)
+    return doc.content.text
+
+
 def construct_tree(fs_path, with_files=False):
     def recursion(loc, with_files):
         children = []
