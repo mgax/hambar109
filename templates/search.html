@@ -7,10 +7,12 @@
     <h1>Hambar109 – căutare în documente publice</h1>
   </div>
 
+  {% set query = request.args.get('q', '') %}
+
   <div class="pd-search">
     <form>
       <input type="search" placeholder="... text ..."
-             name="q" value="{{ request.args.get('q', '') }}">
+             name="q" value="{{ query }}">
       <button type="submit">caută</button>
     </form>
   </div>
