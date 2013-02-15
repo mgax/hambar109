@@ -45,4 +45,37 @@
   </div>
   {% endif %}
 
+  {% if not query %}
+  <div class="row">
+
+    <p class="span12">
+      Baza de date conține edițiile Monitorul Oficial publicate până în
+      decembrie 2011, toate părțile (1 până la 7).  Exemple de căutare:
+    </p>
+
+    <ul class="span12">
+
+      <li>
+        După cuvinte din text:
+        <code><a href="/?q=achiziții+publice">achiziții
+        publice</a></code>.
+      </li>
+
+      <li>
+        După cuvinte alăturate:
+        <code><a href="/?q=&quot;achiziții+publice&quot;">"achiziții
+        publice"</a></code>.
+      </li>
+
+      <li>
+        Eliminarea unui cuvânt (achiziții care nu sunt publice):
+        <code><a href="/?q=achiziții+-publice">achiziții
+        -publice</a></code>.
+      </li>
+
+    </ul>
+
+  </div>
+  {% endif %}
+
 {% endblock %}
