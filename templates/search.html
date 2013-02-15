@@ -27,7 +27,9 @@
       {% for hit in results['hits']['hits'] %}
         <li>
 
-          <h4>{{ hit['_id'] }}</h4>
+          {% set code = hit['_id'] %}
+          {% set text_url = url_for('.document_text', document_code=code) %}
+          <h4><a href="{{ text_url }}">{{ code }}</a></h4>
 
           {% if 'highlight' in hit %}
             <p>{{ hit['highlight']['content']|format_highlight }}</p>
