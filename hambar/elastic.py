@@ -52,8 +52,11 @@ class ElasticSearch(object):
     def index_document(self, doc):
         put_url = ('{self.api_url}/{self.index_name}/document/{doc.code}'
                    .format(self=self, doc=doc))
+        publication, year, _ = doc.code.split('_', 2)
         data_json = json.dumps({
             'content': do_striptags(doc.content.text),
+            'publication': publication,
+            'year': int(year),
         })
         resp = requests.put(put_url, data=data_json)
         if resp.status_code not in [200, 201]:
