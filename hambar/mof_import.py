@@ -141,6 +141,7 @@ def mof_import(name, raw_html=False, as_json=False, as_worker=False):
                 help="Code of document (e.g. mof1_2010_0666)")
 def document(document_code, file_path):
     from model import Document, Content
+    import mof_index
     with file_path.open('rb') as f:
         html = ''.join(invoke_tika(f)).decode('utf-8')
     html = anonymize_cnp(fix_national_characters(html))
@@ -155,6 +156,7 @@ def document(document_code, file_path):
         document_row.content = Content(text=html)
         session.flush()
         log.debug("New version saved id=%d", document_row.content.id)
+        mof_index.es.index_document(document_row)
 
 
 @manager.command
