@@ -10,6 +10,7 @@ import flask
 from flask.ext.script import Manager
 from .tika import invoke_tika
 from .mof_parser import MofParser
+from .queue import enqueue
 
 DEBUG_IMPORT = (os.environ.get('DEBUG_IMPORT') == 'on')
 
@@ -156,7 +157,6 @@ def document(document_code, file_path):
 
 @manager.command
 def many_documents():
-    from queue import enqueue
     for line in sys.stdin:
         (document_code, file_path) = line.strip().split(None, 1)
         enqueue(document, document_code, path(file_path))

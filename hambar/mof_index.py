@@ -3,6 +3,7 @@ import os
 from flask.ext.script import Manager
 from .mof_import import sql_context
 from .elastic import ElasticSearch
+from .queue import enqueue
 
 
 manager = Manager()
@@ -23,7 +24,6 @@ def document(document_code):
 
 @manager.command
 def many_documents():
-    from queue import enqueue
     for line in sys.stdin:
         document_code = line.strip()
         enqueue(document, document_code)
