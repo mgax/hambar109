@@ -11,6 +11,7 @@ from flask.ext.script import Manager
 from .tika import invoke_tika
 from .mof_parser import MofParser
 from .queue import enqueue
+from .cleanup import clean
 
 DEBUG_IMPORT = (os.environ.get('DEBUG_IMPORT') == 'on')
 
@@ -142,6 +143,7 @@ def document(document_code, file_path):
     from model import Document, Content
     with file_path.open('rb') as f:
         html = ''.join(invoke_tika(f)).decode('utf-8')
+    html = clean(html.encode('utf-8'))
 
     with sql_context() as session:
         document_row = get_or_create(session, Document, code=document_code)

@@ -35,7 +35,7 @@ def chars_debug(match, text, debug=False):
 
 
 pat = re.compile(r'([^\x00-\x7F]{2,6})')
-def clean(text, debug, year=None):
+def clean(text, debug=False, year=None):
     """
     Replace custom national characters with their correct representation.
     """
