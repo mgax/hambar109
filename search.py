@@ -49,35 +49,34 @@ def chars_debug(match, text, debug=False):
             import pdb; pdb.set_trace()
 
 
-import re
 pat = re.compile(r'([^\x00-\x7F]{2,6})')
-def clean(file_path, debug, year=None):
-    """ Index a file from the repositoy. """
-    with open(file_path, 'r') as data:
-        text = data.read()
-        chars_mapping = utils.chars_mapping
-        #patch with specific year
-        if year:
-            patch_mapping = getattr(utils,
-                                    'chars_mapping_%s' %year)
-            if patch_mapping:
-                chars_mapping.update(patch_mapping)
-        for bad, good in chars_mapping.iteritems():
-            text = text.replace(bad, good)
-        if debug:
-            good_cases = []
-            perm = []
-            for k in [2, 3]:
-                perm+=list(itertools.product(utils.good_chars, repeat=k))
-            for p in perm:
-                good_cases.append(''.join(p))
-            for match in pat.finditer(text):
-                for case in good_cases:
-                    if match.group(0) in case:
-                        break
-                else:
-                    chars_debug(match, text, True)
-        return text
+def clean(text, debug, year=None):
+    """
+    Replace custom national characters with their correct representation.
+    """
+    chars_mapping = dict(utils.chars_mapping)
+    #patch with specific year
+    if year:
+        patch_mapping = getattr(utils,
+                                'chars_mapping_%s' %year)
+        if patch_mapping:
+            chars_mapping.update(patch_mapping)
+    for bad, good in chars_mapping.iteritems():
+        text = text.replace(bad, good)
+    if debug:
+        good_cases = []
+        perm = []
+        for k in [2, 3]:
+            perm+=list(itertools.product(utils.good_chars, repeat=k))
+        for p in perm:
+            good_cases.append(''.join(p))
+        for match in pat.finditer(text):
+            for case in good_cases:
+                if match.group(0) in case:
+                    break
+            else:
+                chars_debug(match, text, True)
+    return text
 
 
 @search_pages.app_template_filter('format_highlight')
