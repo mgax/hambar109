@@ -7,8 +7,8 @@ import flask
 from flask.ext.script import Manager
 import requests
 import harvest
-import search
 import queue
+from hambar import search
 from hambar import mof_import
 from hambar import mof_index
 
