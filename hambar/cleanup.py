@@ -34,8 +34,8 @@ def chars_debug(match, text, debug=False):
             import pdb; pdb.set_trace()
 
 
-pat = re.compile(r'([^\x00-\x7F]{2,6})')
-def clean(text, debug, year=None):
+pat = re.compile(ur'([^\u0000-\u007F])')
+def fix_national_characters(text, debug=False, year=None):
     """
     Replace custom national characters with their correct representation.
     """
@@ -61,3 +61,8 @@ def clean(text, debug, year=None):
             else:
                 chars_debug(match, text, True)
     return text
+
+
+_cnp = re.compile(r'(?<!\d)\d{13}(?!\d)', re.UNICODE)
+def anonymize_cnp(text):
+    return _cnp.sub('[CNP anonimizat]', text)
