@@ -35,7 +35,7 @@ def chars_debug(match, text, debug=False):
 
 
 pat = re.compile(ur'([^\u0000-\u007F])')
-def clean(text, debug=False, year=None):
+def fix_national_characters(text, debug=False, year=None):
     """
     Replace custom national characters with their correct representation.
     """
