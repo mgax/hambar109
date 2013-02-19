@@ -61,3 +61,8 @@ def fix_national_characters(text, debug=False, year=None):
             else:
                 chars_debug(match, text, True)
     return text
+
+
+_cnp = re.compile(r'(?<!\d)\d{13}(?!\d)', re.UNICODE)
+def anonymize_cnp(text):
+    return _cnp.sub('[CNP anonimizat]', text)
