@@ -11,6 +11,7 @@ from hambar import queue
 from hambar import search
 from hambar import mof_import
 from hambar import mof_index
+from hambar import model
 
 
 LOG_FORMAT = "[%(asctime)s] %(name)s %(levelname)s %(message)s"
@@ -22,7 +23,6 @@ log.setLevel(logging.INFO)
 
 
 def create_app():
-    from hambar.model import DatabaseForFlask
     from hambar.api import api_views
 
     app = flask.Flask(__name__, instance_relative_config=True)
@@ -39,7 +39,7 @@ def create_app():
     if _ga_code:
         app.config['GOOGLE_ANALYTICS_CODE'] = _ga_code
 
-    DatabaseForFlask().initialize_app(app)
+    model.DatabaseForFlask().initialize_app(app)
 
     queue.initialize(app)
 
@@ -58,7 +58,7 @@ def create_app():
 
     @app.route('/_ping')
     def ping():
-        # TODO ping the database
+        app.extensions['hambar-db'].session.query(model.Document).count()
         mof_index.es.ping()
         return "hambar109 is up\n"
 
