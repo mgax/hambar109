@@ -54,6 +54,10 @@
   {% if not query %}
   <div class="row">
 
+    {% macro example(query) -%}
+      <code><a href="/?q={{ query }}">{{ query }}</a></code>
+    {%- endmacro %}
+
     <p class="span12">
       Baza de date conține edițiile Monitorul Oficial publicate până în
       decembrie 2011, toate părțile (1 până la 7).  Exemple de căutare:
@@ -63,35 +67,29 @@
 
       <li>
         După cuvinte din text:
-        <code><a href="/?q=achiziții+publice">achiziții
-        publice</a></code>.
+        {{ example('achiziții publice') }}.
       </li>
 
       <li>
         După cuvinte alăturate:
-        <code><a href="/?q=&quot;achiziții+publice&quot;">"achiziții
-        publice"</a></code>.
+        {{ example('"achiziții publice"') }}.
       </li>
 
       <li>
         Eliminarea unui cuvânt (achiziții care nu sunt publice):
-        <code><a href="/?q=achiziții+-publice">achiziții
-        -publice</a></code>.
+        {{ example('achiziții -publice') }}.
       </li>
 
       <li>
         Căutare într-o publicație anume (ex. Monitorul Oficial partea 1
         sau 4):
-        <code><a href="/?q=publication:mof1+drepturi+de+autor">publication:mof1
-        drepturi de autor</a></code> sau
-        <code><a href="/?q=publication:mof4+adobe">publication:mof4
-        adobe</a></code>.
+        {{ example('publication:mof1 drepturi de autor') }} sau
+        {{ example('publication:mof4 adobe') }}.
       </li>
 
       <li>
         Căutare în apariții dintr-un singur an:
-        <code><a href="/?q=year:2010+drepturi+de+autor">year:2010 drepturi
-        de autor</a></code>.
+        {{ example('year:2010 drepturi de autor') }}.
       </li>
 
     </ul>
