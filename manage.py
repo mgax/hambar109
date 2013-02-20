@@ -35,6 +35,9 @@ def create_app():
                                            or app.instance_path)
     if 'PUBDOCS_ES_URL' in os.environ:
         app.config['PUBDOCS_ES_URL'] = os.environ['PUBDOCS_ES_URL']
+    _ga_code = os.environ.get('GOOGLE_ANALYTICS_CODE')
+    if _ga_code:
+        app.config['GOOGLE_ANALYTICS_CODE'] = _ga_code
 
     DatabaseForFlask().initialize_app(app)
 
