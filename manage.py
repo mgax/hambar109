@@ -56,6 +56,11 @@ def create_app():
         return flask.Response('User-agent: *\nDisallow: /\n',
                               content_type='text/plain')
 
+    @app.route('/_ping')
+    def ping():
+        # TODO ping elasticsearch and the database
+        return "hambar109 is up\n"
+
     return app
 
 
