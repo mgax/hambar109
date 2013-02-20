@@ -58,7 +58,8 @@ def create_app():
 
     @app.route('/_ping')
     def ping():
-        # TODO ping elasticsearch and the database
+        # TODO ping the database
+        mof_index.es.ping()
         return "hambar109 is up\n"
 
     return app

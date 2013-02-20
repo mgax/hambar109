@@ -17,6 +17,10 @@ class ElasticSearch(object):
         self.api_url = api_url
         self.index_name = index_name
 
+    def ping(self):
+        resp = requests.get(self.api_url)
+        assert resp.status_code == 200
+
     def search(self, text, fields=None, page=1, per_page=20):
         search_data = {
             "query": {
