@@ -15,6 +15,19 @@
   </head>
 
   <body>
+
+    {%block navbar %}
+      <div class="navbar navbar-static-top">
+        <div class="navbar-inner">
+          <a class="brand" href="/">hambar109.ro</a>
+          <ul class="nav">
+            <li><a href="{{ url_for('.search') }}">Căutare</a></li>
+            <li><a href="{{ url_for('.about') }}">Despre noi</a></li>
+          </ul>
+        </div>
+      </div>
+    {% endblock %}
+
     <div id="container" class="container">
 
       {% block content %}{% endblock %}
