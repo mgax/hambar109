@@ -15,6 +15,22 @@
   </head>
 
   <body>
+
+    {%block navbar %}
+      <div class="navbar navbar-static-top">
+        <div class="navbar-inner">
+          <a class="brand" href="/">hambar109.ro</a>
+          <ul class="nav">
+            <li><a href="{{ url_for('.search') }}">Căutare</a></li>
+            <li><a href="{{ url_for('.about') }}">Despre noi</a></li>
+            <li><a href="https://github.com/mgax/hambar109">Cod sursă</a></li>
+            <li><a href="http://apti.ro/mailman/listinfo/legilibere_apti.ro"
+                  >Lista de discuții</a></li>
+          </ul>
+        </div>
+      </div>
+    {% endblock %}
+
     <div id="container" class="container">
 
       {% block content %}{% endblock %}
@@ -23,14 +39,6 @@
 
       <footer>
         {# <p>&copy; TODO 2012</p> #}
-
-        <p>
-          Resurse:
-          <a href="https://github.com/mgax/hambar109">codul sursă (GitHub)</a>,
-          <a href="http://apti.ro/mailman/listinfo/legilibere_apti.ro"
-             >lista de discuții</a>.
-        </p>
-
       </footer>
 
     </div>

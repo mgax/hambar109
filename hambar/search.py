@@ -44,6 +44,11 @@ def search():
     })
 
 
+@search_pages.route('/about')
+def about():
+    return flask.render_template('about.html')
+
+
 def _mof_pdf_url(code):
     try:
         section, year, _ = code.split('_', 2)
