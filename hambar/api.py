@@ -24,3 +24,14 @@ def get_document(code):
         'headline': act.headline,
     }
     return flask.jsonify(acts=[act_data(act) for act in doc.acts])
+
+
+@api_views.route('/document/<string:code>.html')
+def get_document_html(code):
+    from .model import Document
+
+    doc = flask.g.dbsession.query(Document).filter_by(code=code).first()
+    if doc is None:
+        flask.abort(404)
+
+    return doc.content.text
