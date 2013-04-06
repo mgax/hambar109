@@ -8,7 +8,7 @@ def prepare_db_session():
     flask.g.dbsession = flask.current_app.extensions['hambar-db'].session
 
 
-@api_views.route('/document/<string:code>')
+@api_views.route('/document/<string:code>.json')
 def get_document(code):
     from .model import Document
 
