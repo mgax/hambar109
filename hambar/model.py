@@ -1,12 +1,15 @@
+import argparse
+from flask.ext.script import Manager
+from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 import sqlalchemy as sa
 
+model_manager = Manager()
+db = SQLAlchemy()
 
-Base = declarative_base()
 
-
-class Content(Base):
+class Content(db.Model):
 
     __tablename__ = 'content'
     id = sa.Column(sa.Integer, primary_key=True)
@@ -14,7 +17,7 @@ class Content(Base):
     text = sa.Column(sa.Text)
 
 
-class Document(Base):
+class Document(db.Model):
 
     __tablename__ = 'documents'
     id = sa.Column(sa.Integer, primary_key=True)
@@ -24,7 +27,7 @@ class Document(Base):
     content = relationship('Content')
 
 
-class ActType(Base):
+class ActType(db.Model):
 
     __tablename__ = 'act_types'
     id = sa.Column(sa.Integer, primary_key=True)
@@ -32,7 +35,7 @@ class ActType(Base):
     label = sa.Column(sa.String)
 
 
-class Act(Base):
+class Act(db.Model):
 
     __tablename__ = 'acts'
     id = sa.Column(sa.Integer, primary_key=True)
@@ -46,7 +49,7 @@ class Act(Base):
     headline = sa.Column(sa.String)
 
 
-class ImportResult(Base):
+class ImportResult(db.Model):
 
     __tablename__ = 'import_result'
     id = sa.Column(sa.Integer, primary_key=True)
@@ -88,3 +91,32 @@ class DatabaseForFlask(object):
                 ctx.hambar_db_session.commit()
             else:
                 ctx.hambar_db_session.rollback()
+
+
+@model_manager.option('alembic_args', nargs=argparse.REMAINDER)
+def alembic(alembic_args):
+    from alembic.config import CommandLine
+    CommandLine().main(argv=alembic_args)
+
+
+@model_manager.command
+def sync():
+    db.create_all()
+    alembic(['stamp', 'head'])
+
+
+@model_manager.command
+def revision(message=None):
+    if message is None:
+        message = raw_input('revision name: ')
+    return alembic(['revision', '--autogenerate', '-m', message])
+
+
+@model_manager.command
+def upgrade(revision='head'):
+    return alembic(['upgrade', revision])
+
+
+@model_manager.command
+def downgrade(revision):
+    return alembic(['downgrade', revision])

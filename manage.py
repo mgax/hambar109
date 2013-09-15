@@ -9,7 +9,6 @@ import requests
 import harvest
 from hambar import queue
 from hambar import search
-from hambar import mof_import
 from hambar import mof_index
 from hambar import model
 
@@ -39,7 +38,7 @@ def create_app():
     if _ga_code:
         app.config['GOOGLE_ANALYTICS_CODE'] = _ga_code
 
-    model.DatabaseForFlask().initialize_app(app)
+    model.db.init_app(app)
 
     queue.initialize(app)
 
@@ -69,7 +68,6 @@ manager = Manager(create_app)
 
 harvest.register_commands(manager)
 search.register_commands(manager)
-manager.add_command('import', mof_import.manager)
 manager.add_command('index', mof_index.manager)
 manager.add_command('queue', queue.manager)
 
