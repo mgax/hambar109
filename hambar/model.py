@@ -14,8 +14,12 @@ def random_uuid():
 
 
 class Mof(db.Model):
+
     id = db.Column(UUID, primary_key=True, default=random_uuid)
     code = sa.Column(sa.String)
+    year = sa.Column(sa.Integer)
+    part = sa.Column(sa.Integer)
+    number = sa.Column(sa.Integer)
 
 
 model_manager = Manager()
