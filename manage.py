@@ -62,32 +62,6 @@ manager.add_command('index', mof_index.manager)
 manager.add_command('db', model.model_manager)
 
 
-@manager.option('-p', '--port')
-def runfcgi(port):
-    from flup.server.fcgi import WSGIServer
-    app = create_app()
-    addr = ('127.0.0.1', int(port))
-    WSGIServer(app, debug=app.debug, bindAddress=addr).run()
-
-
-@manager.option('-p', '--port', type=int, default=5000)
-def tornado(port):
-    from tornado.web import Application, FallbackHandler
-    from tornado.wsgi import WSGIContainer
-    from tornado.httpserver import HTTPServer
-    from tornado.ioloop import IOLoop
-
-    app = create_app()
-    wsgi_container = WSGIContainer(app)
-    wsgi_container._log = lambda *args, **kwargs: None
-    handlers = [('.*', FallbackHandler, {'fallback': wsgi_container})]
-    tornado_app = Application(handlers, debug=DEBUG)
-    http_server = HTTPServer(tornado_app)
-    http_server.listen(port)
-    log.info("Hambar109 Tornado listening on port %r", port)
-    IOLoop.instance().start()
-
-
 if __name__ == '__main__':
     logging.basicConfig(format=LOG_FORMAT)
     logging.getLogger('werkzeug').setLevel(logging.INFO)
