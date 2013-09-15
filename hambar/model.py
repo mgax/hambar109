@@ -59,40 +59,6 @@ class ImportResult(db.Model):
     success = sa.Column(sa.Boolean)
 
 
-def get_session_maker(database=None):
-    import os
-    from sqlalchemy.orm import sessionmaker
-    engine = sa.create_engine(database or os.environ['DATABASE'])
-    return sessionmaker(bind=engine)
-
-
-class DatabaseForFlask(object):
-
-    def __init__(self):
-        import flask
-        self._stack = flask._app_ctx_stack
-
-    def initialize_app(self, app):
-        self.Session = get_session_maker(app.config.get('DATABASE'))
-        app.extensions['hambar-db'] = self
-        app.teardown_appcontext(self.teardown)
-
-    @property
-    def session(self):
-        ctx = self._stack.top
-        if not hasattr(ctx, 'hambar_db_session'):
-            ctx.hambar_db_session = self.Session()
-        return ctx.hambar_db_session
-
-    def teardown(self, exception):
-        ctx = self._stack.top
-        if hasattr(ctx, 'hambar_db_session'):
-            if exception is None:
-                ctx.hambar_db_session.commit()
-            else:
-                ctx.hambar_db_session.rollback()
-
-
 @model_manager.option('alembic_args', nargs=argparse.REMAINDER)
 def alembic(alembic_args):
     from alembic.config import CommandLine

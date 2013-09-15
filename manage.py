@@ -28,6 +28,7 @@ def create_app():
     app.debug = DEBUG
     app.config.update({
         'STATIC_LIB_URL': 'http://grep.ro/quickpub/lib',
+        'SQLALCHEMY_DATABASE_URI': os.environ['DATABASE'],
     })
     app.config.from_pyfile('settings.py', silent=True)
     app.config['PUBDOCS_FILE_REPO'] = path(os.environ.get('PUBDOCS_FILE_REPO')
@@ -80,6 +81,7 @@ harvest.register_commands(manager)
 search.register_commands(manager)
 manager.add_command('index', mof_index.manager)
 manager.add_command('queue', queue.manager)
+manager.add_command('db', model.model_manager)
 
 
 @manager.option('-p', '--port')
