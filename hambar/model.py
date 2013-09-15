@@ -9,7 +9,7 @@ model_manager = Manager()
 db = SQLAlchemy()
 
 
-class Document(db.Model):
+class Mof(db.Model):
     id = sa.Column(sa.Integer, primary_key=True)
     code = sa.Column(sa.String)
 
