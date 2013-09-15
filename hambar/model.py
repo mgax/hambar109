@@ -1,4 +1,5 @@
 import argparse
+import logging
 import uuid
 from flask.ext.script import Manager
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -23,6 +24,8 @@ model_manager = Manager()
 @model_manager.option('alembic_args', nargs=argparse.REMAINDER)
 def alembic(alembic_args):
     from alembic.config import CommandLine
+    logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+    logging.getLogger('alembic').setLevel(logging.INFO)
     CommandLine().main(argv=alembic_args)
 
 
