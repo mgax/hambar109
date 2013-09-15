@@ -110,6 +110,7 @@ def tornado(port):
 
 if __name__ == '__main__':
     logging.basicConfig(format=LOG_FORMAT)
+    logging.getLogger('werkzeug').setLevel(logging.INFO)
 
     SENTRY_DSN = os.environ.get('SENTRY_DSN')
     if SENTRY_DSN:
