@@ -19,6 +19,7 @@ class Mof(db.Model):
     year = db.Column(db.Integer)
     part = db.Column(db.Integer)
     number = db.Column(db.Integer)
+    fetchme = db.Column(db.Boolean)
 
 
 model_manager = Manager()
