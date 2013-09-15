@@ -1,17 +1,23 @@
 import argparse
+import uuid
 from flask.ext.script import Manager
 from flask.ext.sqlalchemy import SQLAlchemy
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
 import sqlalchemy as sa
 
-model_manager = Manager()
 db = SQLAlchemy()
 
 
+def random_uuid():
+    return str(uuid.uuid4())
+
+
 class Mof(db.Model):
-    id = sa.Column(sa.Integer, primary_key=True)
+    id = db.Column(UUID, primary_key=True, default=random_uuid)
     code = sa.Column(sa.String)
+
+
+model_manager = Manager()
 
 
 @model_manager.option('alembic_args', nargs=argparse.REMAINDER)
