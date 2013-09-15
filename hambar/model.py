@@ -10,39 +10,31 @@ db = SQLAlchemy()
 
 
 class Content(db.Model):
-
-    __tablename__ = 'content'
     id = sa.Column(sa.Integer, primary_key=True)
     time = sa.Column(sa.DateTime, default=sa.func.now())
     text = sa.Column(sa.Text)
 
 
 class Document(db.Model):
-
-    __tablename__ = 'documents'
     id = sa.Column(sa.Integer, primary_key=True)
     code = sa.Column(sa.String)
     import_time = sa.Column(sa.DateTime)
-    content_id = sa.Column(sa.Integer, sa.ForeignKey('content.id'))
+    content_id = sa.Column(sa.Integer, sa.ForeignKey(Content.id))
     content = relationship('Content')
 
 
 class ActType(db.Model):
-
-    __tablename__ = 'act_types'
     id = sa.Column(sa.Integer, primary_key=True)
     code = sa.Column(sa.String)
     label = sa.Column(sa.String)
 
 
 class Act(db.Model):
-
-    __tablename__ = 'acts'
     id = sa.Column(sa.Integer, primary_key=True)
-    type_id = sa.Column(sa.Integer, sa.ForeignKey('act_types.id'))
-    type = relationship("ActType")
-    document_id = sa.Column(sa.Integer, sa.ForeignKey('documents.id'))
-    document = relationship("Document", backref='acts')
+    type_id = sa.Column(sa.Integer, sa.ForeignKey(ActType.id))
+    type = relationship(ActType)
+    document_id = sa.Column(sa.Integer, sa.ForeignKey(Document.id))
+    document = relationship(Document, backref='acts')
     ident = sa.Column(sa.String)
     title = sa.Column(sa.String)
     text = sa.Column(sa.Text)
@@ -50,12 +42,10 @@ class Act(db.Model):
 
 
 class ImportResult(db.Model):
-
-    __tablename__ = 'import_result'
     id = sa.Column(sa.Integer, primary_key=True)
     time = sa.Column(sa.DateTime, default=sa.func.now())
-    document_id = sa.Column(sa.Integer, sa.ForeignKey('documents.id'))
-    document = relationship("Document", backref='import_results')
+    document_id = sa.Column(sa.Integer, sa.ForeignKey(Document.id))
+    document = relationship(Document, backref='import_results')
     success = sa.Column(sa.Boolean)
 
 
