@@ -6,7 +6,6 @@ from path import path
 import flask
 from flask.ext.script import Manager
 import requests
-import harvest
 from hambar import search
 from hambar import mof_index
 from hambar import model
@@ -74,7 +73,6 @@ def create_app():
 
 manager = Manager(create_app)
 
-harvest.register_commands(manager)
 search.register_commands(manager)
 manager.add_command('index', mof_index.manager)
 manager.add_command('db', model.model_manager)
