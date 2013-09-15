@@ -55,21 +55,25 @@ def create_app():
     return app
 
 
-manager = Manager(create_app)
-
-search.register_commands(manager)
-manager.add_command('index', mof_index.manager)
-manager.add_command('db', model.model_manager)
+def create_manager(app):
+    manager = Manager(app)
+    search.register_commands(manager)
+    manager.add_command('index', mof_index.manager)
+    manager.add_command('db', model.model_manager)
+    return manager
 
 
 if __name__ == '__main__':
     logging.basicConfig(format=LOG_FORMAT)
     logging.getLogger('werkzeug').setLevel(logging.INFO)
 
-    SENTRY_DSN = os.environ.get('SENTRY_DSN')
+    app = create_app()
+
+    SENTRY_DSN = app.config.get('SENTRY_DSN')
     if SENTRY_DSN:
         from raven.conf import setup_logging
         from raven.handlers.logging import SentryHandler
         setup_logging(SentryHandler(SENTRY_DSN, level=logging.WARN))
 
+    manager = create_manager(app)
     manager.run()
