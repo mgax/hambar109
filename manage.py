@@ -1,19 +1,15 @@
 #!/usr/bin/env python
 
-import os
 import logging
 from path import path
 import flask
 from flask.ext.script import Manager
-import requests
 from hambar import search
 from hambar import mof_index
 from hambar import model
 
 
 LOG_FORMAT = "[%(asctime)s] %(name)s %(levelname)s %(message)s"
-
-DEBUG = (os.environ.get('DEBUG') == 'on')
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -23,19 +19,7 @@ def create_app():
     from hambar.api import api_views
 
     app = flask.Flask(__name__, instance_relative_config=True)
-    app.debug = DEBUG
-    app.config.update({
-        'STATIC_LIB_URL': 'http://grep.ro/quickpub/lib',
-        'SQLALCHEMY_DATABASE_URI': os.environ['DATABASE'],
-    })
     app.config.from_pyfile('settings.py', silent=True)
-    app.config['PUBDOCS_FILE_REPO'] = path(os.environ.get('PUBDOCS_FILE_REPO')
-                                           or app.instance_path)
-    if 'PUBDOCS_ES_URL' in os.environ:
-        app.config['PUBDOCS_ES_URL'] = os.environ['PUBDOCS_ES_URL']
-    _ga_code = os.environ.get('GOOGLE_ANALYTICS_CODE')
-    if _ga_code:
-        app.config['GOOGLE_ANALYTICS_CODE'] = _ga_code
 
     model.db.init_app(app)
 
