@@ -4,7 +4,6 @@ import uuid
 from flask.ext.script import Manager
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
-import sqlalchemy as sa
 
 db = SQLAlchemy()
 
@@ -16,10 +15,10 @@ def random_uuid():
 class Mof(db.Model):
 
     id = db.Column(UUID, primary_key=True, default=random_uuid)
-    code = sa.Column(sa.String)
-    year = sa.Column(sa.Integer)
-    part = sa.Column(sa.Integer)
-    number = sa.Column(sa.Integer)
+    code = db.Column(db.String)
+    year = db.Column(db.Integer)
+    part = db.Column(db.Integer)
+    number = db.Column(db.Integer)
 
 
 model_manager = Manager()
