@@ -7,7 +7,6 @@ import flask
 from flask.ext.script import Manager
 import requests
 import harvest
-from hambar import queue
 from hambar import search
 from hambar import mof_index
 from hambar import model
@@ -40,8 +39,6 @@ def create_app():
         app.config['GOOGLE_ANALYTICS_CODE'] = _ga_code
 
     model.db.init_app(app)
-
-    queue.initialize(app)
 
     app.register_blueprint(search.search_pages)
 
@@ -80,7 +77,6 @@ manager = Manager(create_app)
 harvest.register_commands(manager)
 search.register_commands(manager)
 manager.add_command('index', mof_index.manager)
-manager.add_command('queue', queue.manager)
 manager.add_command('db', model.model_manager)
 
 

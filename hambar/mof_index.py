@@ -2,7 +2,6 @@ import sys
 import os
 from flask.ext.script import Manager
 from .elastic import ElasticSearch
-from .queue import enqueue
 
 
 manager = Manager()
@@ -24,4 +23,5 @@ def document(document_code):
 def many_documents():
     for line in sys.stdin:
         document_code = line.strip()
-        enqueue(document, document_code)
+        #enqueue(document, document_code)
+        raise NotImplementedError
