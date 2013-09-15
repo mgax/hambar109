@@ -54,8 +54,12 @@ def create_manager(app):
     from hambar import search
     from hambar import mof_index
     from hambar import model
+    from hambar import harvest
+
     manager = Manager(app)
     search.register_commands(manager)
     manager.add_command('index', mof_index.manager)
     manager.add_command('db', model.model_manager)
+    manager.add_command('harvest', harvest.harvest_manager)
+
     return manager
