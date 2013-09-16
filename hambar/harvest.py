@@ -29,7 +29,6 @@ def new_editions(part, number, fetch=False):
                              .order_by('-number')
                              .first())
     next_number = 1 if latest_known is None else latest_known.number + 1
-    print next_number, number
     for number in range(next_number, number + 1):
         row = model.Mof(year=year, part=part, number=number)
         if fetch:
