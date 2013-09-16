@@ -43,10 +43,16 @@ def fetch(count):
     harvest_path = path(flask.current_app.instance_path) / 'harvest'
     harvest_path.makedirs_p()
 
-    for c in xrange(count):
+    got_count = 0
+    while True:
         model.db.session.rollback()
         mof_pool = model.Mof.query.filter_by(fetchme=True, part=4)
-        lucky = random.randrange(mof_pool.count())
+        remaining = mof_pool.count()
+        if not remaining:
+            logger.info("Nothing left to download!")
+            break
+
+        lucky = random.randrange(remaining)
         mof = mof_pool.offset(lucky).first()
         url = URL_FORMAT.format(mof=mof)
         file_path = harvest_path / FILENAME_FORMAT.format(mof=mof)
@@ -64,6 +70,11 @@ def fetch(count):
             resp = requests.post(agent_url, data={'url': url}, stream=True)
             for chunk in FileWrapper(resp.raw):
                 f.write(chunk)
+
+        got_count += 1
+        if got_count >= count:
+            logger.info("Got %d files as requested. Stopping.", count)
+            break
 
         t = random.randint(20, 30)
         logger.info("Sleeping for %d secods", t)
