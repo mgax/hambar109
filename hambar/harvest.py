@@ -12,7 +12,7 @@ from hambar import model
 harvest_manager = Manager()
 
 URL_FORMAT = ('http://www.monitoruloficial.ro/emonitornew/php/services'
-              '/view.php?doc=05{mof.year}{mof.number}&format=pdf')
+              '/view.php?doc=05{mof.year}{mof.number}&%66or%6d%61t=%70d%66')
 FILENAME_FORMAT = 'mof{mof.part}_{mof.year}_{mof.number:04}.pdf'
 
 logger = logging.getLogger(__name__)
