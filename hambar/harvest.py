@@ -29,12 +29,15 @@ def new_editions(part, number, fetch=False):
                              .order_by('-number')
                              .first())
     next_number = 1 if latest_known is None else latest_known.number + 1
+    n = 0
     for number in range(next_number, number + 1):
         row = model.Mof(year=year, part=part, number=number)
         if fetch:
             row.fetchme = True
         model.db.session.add(row)
+        n += 1
     model.db.session.commit()
+    logger.info("Added %d records", n)
 
 
 @harvest_manager.option('count', type=int)
