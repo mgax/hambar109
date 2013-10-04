@@ -143,7 +143,6 @@ def get_pages(part, year, number):
 def get_images(part, year, number_range):
     number_start, number_end = map(int, number_range.split('..'))
     for number in xrange(number_start, number_end):
-        logger.info("Getting %d/%d/%d", part, year, number)
         t0 = time.time()
         kwargs = {'part': part, 'year': year, 'number': number}
 
@@ -155,6 +154,7 @@ def get_images(part, year, number_range):
         if mof.text_json is not None:
             continue
 
+        logger.info("Getting %d/%d/%d", part, year, number)
         pages = get_pages(**kwargs)
 
         mof.text_json = flask.json.dumps(pages)
