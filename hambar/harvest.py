@@ -146,17 +146,28 @@ def get_pages(part, year, number):
         tmp.rmtree()
 
 
-@harvest_manager.command
-def test_pages():
-    kwargs = {
-        'part': 4,
-        'year': 2013,
-        'number': 2410,
-    }
-    pages = get_pages(**kwargs)
-    mof = model.Mof.query.filter_by(**kwargs).first()
-    if mof is None:
-        mof = model.Mof(**kwargs)
-        model.db.session.add(mof)
-    mof.text_json = flask.json.dumps(pages)
-    model.db.session.commit()
+@harvest_manager.option('number_range')
+@harvest_manager.option('year', type=int)
+@harvest_manager.option('part', type=int)
+def get_images(part, year, number_range):
+    number_start, number_end = map(int, number_range.split('..'))
+    for number in xrange(number_start, number_end):
+        logger.info("Getting %d/%d/%d", part, year, number)
+        t0 = time.time()
+        kwargs = {'part': part, 'year': year, 'number': number}
+
+        mof = model.Mof.query.filter_by(**kwargs).first()
+        if mof is None:
+            mof = model.Mof(**kwargs)
+            model.db.session.add(mof)
+
+        if mof.text_json is not None:
+            continue
+
+        pages = get_pages(**kwargs)
+
+        mof.text_json = flask.json.dumps(pages)
+        model.db.session.commit()
+
+        logger.info("Got %d/%d/%d, %d pages, %d seconds",
+                    part, year, number, len(pages), time.time() - t0)
