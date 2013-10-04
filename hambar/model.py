@@ -20,6 +20,7 @@ class Mof(db.Model):
     part = db.Column(db.Integer)
     number = db.Column(db.Integer)
     fetchme = db.Column(db.Boolean)
+    text_json = db.Column(db.Text)
 
 
 model_manager = Manager()
