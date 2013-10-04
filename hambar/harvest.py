@@ -3,6 +3,7 @@ import random
 import logging
 import time
 from itertools import count
+from contextlib import contextmanager
 import tempfile
 import subprocess
 import flask
@@ -125,10 +126,18 @@ def get_result(job):
     return job.result
 
 
-def get_pages(part, year, number):
+@contextmanager
+def temp_dir():
     tmp = path(tempfile.mkdtemp())
-    jobs = []
     try:
+        yield tmp
+    finally:
+        tmp.rmtree()
+
+
+def get_pages(part, year, number):
+    jobs = []
+    with temp_dir() as tmp:
         for p in count(1):
             url = PAGE_JPG_URL.format(year=year, part=part,
                                       number=number, page=p)
@@ -142,8 +151,6 @@ def get_pages(part, year, number):
 
         return [get_result(j) for j in jobs]
 
-    finally:
-        tmp.rmtree()
 
 
 @harvest_manager.option('number_range')
