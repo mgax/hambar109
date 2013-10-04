@@ -6,6 +6,7 @@ from itertools import count
 import tempfile
 import subprocess
 import flask
+from flask.ext.rq import job
 from flask.ext.script import Manager
 from werkzeug.wsgi import FileWrapper
 import requests
@@ -97,31 +98,43 @@ def fetch(count):
         time.sleep(t)
 
 
+@job
+def ocr(image_path):
+    cmd = ['tesseract', image_path, image_path, '-l', 'ron']
+    with open('/dev/null', 'wb') as devnull:
+        subprocess.check_call(cmd, stderr=devnull)
+
+    text_path = path(image_path + '.txt')
+    text = text_path.text(encoding='utf-8')
+    image_path.unlink()
+    text_path.unlink()
+    return text
+
+
+def get_result(job):
+    while not job.is_finished:
+        time.sleep(.5)
+    if job.is_failed:
+        raise RuntimeError("Job failed :(")
+    return job.result
+
+
 def get_pages(part, year, number):
     tmp = path(tempfile.mkdtemp())
-    pages_text = []
+    jobs = []
     try:
         for p in count(1):
             url = PAGE_JPG_URL.format(year=year, part=part,
                                       number=number, page=p)
-            image_path = tmp / 'page.jpg'
-            text_path = path(image_path + '.txt')
+            image_path = tmp / ('page%d.jpg' % p)
 
             with (tmp / image_path).open('wb') as f:
                 if not download(url, f):
                     break
 
-            cmd = ['tesseract', image_path, image_path, '-l', 'ron']
-            with open('/dev/null', 'wb') as devnull:
-                subprocess.check_call(cmd, stderr=devnull)
+            jobs.append(ocr.delay(image_path))
 
-            text = text_path.text(encoding='utf-8')
-            pages_text.append(text)
-
-            image_path.unlink()
-            text_path.unlink()
-
-        return pages_text
+        return [get_result(j) for j in jobs]
 
     finally:
         tmp.rmtree()

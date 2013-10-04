@@ -62,4 +62,9 @@ def create_manager(app):
     manager.add_command('db', model.model_manager)
     manager.add_command('harvest', harvest.harvest_manager)
 
+    @manager.command
+    def worker():
+        from flask.ext.rq import get_worker
+        get_worker().work()
+
     return manager
