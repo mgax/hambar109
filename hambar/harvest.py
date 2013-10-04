@@ -26,9 +26,15 @@ logger.setLevel(logging.INFO)
 
 
 def download(url, out_file):
-    logger.info("Fetching %s", url)
-    agent_url = flask.current_app.config['HAMBAR_AGENT_URL']
-    resp = requests.post(agent_url, data={'url': url}, stream=True)
+    agent_url = flask.current_app.config.get('HAMBAR_AGENT_URL')
+    if agent_url is None:
+        logger.info("Fetching %s (direct)", url)
+        resp = requests.get(url, stream=True)
+
+    else:
+        logger.info("Fetching %s (agent)", url)
+        resp = requests.post(agent_url, data={'url': url}, stream=True)
+
     if resp.status_code == 404:
         return False
     elif resp.status_code == 200:
