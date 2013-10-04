@@ -2,6 +2,9 @@ import sys
 import random
 import logging
 import time
+from itertools import count
+import tempfile
+import subprocess
 import flask
 from flask.ext.script import Manager
 from werkzeug.wsgi import FileWrapper
@@ -11,12 +14,28 @@ from hambar import model
 
 harvest_manager = Manager()
 
+PAGE_JPG_URL = ('http://www.expert-monitor.ro:8080'
+                '/Monitoare/{year}/{part}/{number}/Pozemartor/{page}.jpg')
 URL_FORMAT = ('http://www.monitoruloficial.ro/emonitornew/php/services'
               '/view.php?doc=05{mof.year}{mof.number}&%66or%6d%61t=%70d%66')
 FILENAME_FORMAT = 'mof{mof.part}_{mof.year}_{mof.number:04}.pdf'
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+
+def download(url, out_file):
+    logger.info("Fetching %s", url)
+    agent_url = flask.current_app.config['HAMBAR_AGENT_URL']
+    resp = requests.post(agent_url, data={'url': url}, stream=True)
+    if resp.status_code == 404:
+        return False
+    elif resp.status_code == 200:
+        for chunk in FileWrapper(resp.raw):
+            out_file.write(chunk)
+        return True
+    else:
+        raise RuntimeError("Can't understand status code %d", resp.status_code)
 
 
 @harvest_manager.option('number', type=int)
@@ -65,13 +84,8 @@ def fetch(count):
             logger.info("Skipping %s, already exists", file_path.name)
             continue
 
-        logger.info("Fetching %s to %s", url, file_path.name)
-
         with file_path.open('wb') as f:
-            agent_url = flask.current_app.config['HAMBAR_AGENT_URL']
-            resp = requests.post(agent_url, data={'url': url}, stream=True)
-            for chunk in FileWrapper(resp.raw):
-                f.write(chunk)
+            assert download(url, f)
 
         got_count += 1
         if got_count >= count:
@@ -81,3 +95,49 @@ def fetch(count):
         t = random.randint(20, 30)
         logger.info("Sleeping for %d secods", t)
         time.sleep(t)
+
+
+def get_pages(part, year, number):
+    tmp = path(tempfile.mkdtemp())
+    pages_text = []
+    try:
+        for p in count(1):
+            url = PAGE_JPG_URL.format(year=year, part=part,
+                                      number=number, page=p)
+            image_path = tmp / 'page.jpg'
+            text_path = path(image_path + '.txt')
+
+            with (tmp / image_path).open('wb') as f:
+                if not download(url, f):
+                    break
+
+            cmd = ['tesseract', image_path, image_path, '-l', 'ron']
+            with open('/dev/null', 'wb') as devnull:
+                subprocess.check_call(cmd, stderr=devnull)
+
+            text = text_path.text(encoding='utf-8')
+            pages_text.append(text)
+
+            image_path.unlink()
+            text_path.unlink()
+
+        return pages_text
+
+    finally:
+        tmp.rmtree()
+
+
+@harvest_manager.command
+def test_pages():
+    kwargs = {
+        'part': 4,
+        'year': 2013,
+        'number': 2410,
+    }
+    pages = get_pages(**kwargs)
+    mof = model.Mof.query.filter_by(**kwargs).first()
+    if mof is None:
+        mof = model.Mof(**kwargs)
+        model.db.session.add(mof)
+    mof.text_json = flask.json.dumps(pages)
+    model.db.session.commit()
