@@ -103,7 +103,6 @@ def fetch(count):
         time.sleep(t)
 
 
-@job
 def ocr(image_path):
     cmd = ['tesseract', image_path, image_path, '-l', 'ron']
     with open('/dev/null', 'wb') as devnull:
@@ -116,21 +115,26 @@ def ocr(image_path):
     return text
 
 
+@job
+def get_and_ocr(url):
+    with temp_dir() as tmp:
+        image_path = tmp / 'page.jpg'
+
+        with image_path.open('wb') as f:
+            if not download(url, f):
+                return None
+
+        return ocr(image_path)
+
+
 def get_pages(part, year, number):
     jobs = []
-    with temp_dir() as tmp:
-        for p in count(1):
-            url = PAGE_JPG_URL.format(year=year, part=part,
-                                      number=number, page=p)
-            image_path = tmp / ('page%d.jpg' % p)
+    for p in range(1, 33):
+        url = PAGE_JPG_URL.format(year=year, part=part,
+                                  number=number, page=p)
+        jobs.append(get_and_ocr.delay(url))
 
-            with image_path.open('wb') as f:
-                if not download(url, f):
-                    break
-
-            jobs.append(ocr.delay(image_path))
-
-        return [get_result(j) for j in jobs]
+    return [r for r in (get_result(j) for j in jobs) if r is not None]
 
 
 @harvest_manager.option('number_range')
