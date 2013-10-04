@@ -124,7 +124,7 @@ def get_pages(part, year, number):
                                       number=number, page=p)
             image_path = tmp / ('page%d.jpg' % p)
 
-            with (tmp / image_path).open('wb') as f:
+            with image_path.open('wb') as f:
                 if not download(url, f):
                     break
 
