@@ -1,10 +1,7 @@
-import sys
 import random
 import logging
 import time
 from itertools import count
-from contextlib import contextmanager
-import tempfile
 import subprocess
 import flask
 from flask.ext.rq import job
@@ -13,6 +10,7 @@ from werkzeug.wsgi import FileWrapper
 import requests
 from path import path
 from hambar import model
+from hambar.utils import get_result, temp_dir
 
 harvest_manager = Manager()
 
@@ -118,23 +116,6 @@ def ocr(image_path):
     return text
 
 
-def get_result(job):
-    while not job.is_finished:
-        time.sleep(.5)
-    if job.is_failed:
-        raise RuntimeError("Job failed :(")
-    return job.result
-
-
-@contextmanager
-def temp_dir():
-    tmp = path(tempfile.mkdtemp())
-    try:
-        yield tmp
-    finally:
-        tmp.rmtree()
-
-
 def get_pages(part, year, number):
     jobs = []
     with temp_dir() as tmp:
@@ -150,7 +131,6 @@ def get_pages(part, year, number):
             jobs.append(ocr.delay(image_path))
 
         return [get_result(j) for j in jobs]
-
 
 
 @harvest_manager.option('number_range')
