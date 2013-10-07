@@ -19,6 +19,7 @@ class Mof(db.Model):
     year = db.Column(db.Integer)
     part = db.Column(db.Integer)
     number = db.Column(db.Integer)
+    extension = db.Column(db.String)
     fetchme = db.Column(db.Boolean)
     text_json = db.Column(db.Text)
 
