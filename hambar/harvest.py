@@ -17,11 +17,17 @@ harvest_manager = Manager()
 PAGE_JPG_URL = ('http://www.expert-monitor.ro:8080'
                 '/Monitoare/{year}/{part}/{number}/Pozemartor/{page}.jpg')
 URL_FORMAT = ('http://www.monitoruloficial.ro/emonitornew/php/services'
-              '/view.php?doc=05{mof.year}{mof.number}&%66or%6d%61t=%70d%66')
+              '/view.php?doc={code}&%66or%6d%61t=%70d%66')
 FILENAME_FORMAT = 'mof{mof.part}_{mof.year}_{mof.number:04}.pdf'
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+
+def create_mof_url(mof):
+    part_number = 1 if mof.part == 1 else mof.part + 1
+    code = '%02d%04d%04d' % (part_number, mof.year, mof.number)
+    return URL_FORMAT.format(code=code)
 
 
 def download(url, out_file):
@@ -73,7 +79,7 @@ def fetch(count):
     got_count = 0
     while True:
         model.db.session.rollback()
-        mof_pool = model.Mof.query.filter_by(fetchme=True, part=4)
+        mof_pool = model.Mof.query.filter_by(fetchme=True)
         remaining = mof_pool.count()
         if not remaining:
             logger.info("Nothing left to download!")
@@ -81,7 +87,7 @@ def fetch(count):
 
         lucky = random.randrange(remaining)
         mof = mof_pool.offset(lucky).first()
-        url = URL_FORMAT.format(mof=mof)
+        url = create_mof_url(mof)
         file_path = harvest_path / FILENAME_FORMAT.format(mof=mof)
         mof.fetchme = False
         model.db.session.commit()
