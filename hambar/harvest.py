@@ -18,7 +18,6 @@ PAGE_JPG_URL = ('http://www.expert-monitor.ro:8080'
                 '/Monitoare/{year}/{part}/{number}/Pozemartor/{page}.jpg')
 URL_FORMAT = ('http://www.monitoruloficial.ro/emonitornew/php/services'
               '/view.php?doc={code}&%66or%6d%61t=%70d%66')
-FILENAME_FORMAT = 'mof{mof.part}_{mof.year}_{mof.number:04}.pdf'
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -73,9 +72,6 @@ def new_editions(part, number, fetch=False):
 
 @harvest_manager.option('count', type=int)
 def fetch(count):
-    harvest_path = path(flask.current_app.instance_path) / 'harvest'
-    harvest_path.makedirs_p()
-
     got_count = 0
     while True:
         model.db.session.rollback()
@@ -88,15 +84,14 @@ def fetch(count):
         lucky = random.randrange(remaining)
         mof = mof_pool.offset(lucky).first()
         url = create_mof_url(mof)
-        file_path = harvest_path / FILENAME_FORMAT.format(mof=mof)
         mof.fetchme = False
         model.db.session.commit()
 
-        if file_path.exists():
-            logger.info("Skipping %s, already exists", file_path.name)
+        if mof.local_path.exists():
+            logger.info("Skipping %s, already exists", mof.pdf_filename.name)
             continue
 
-        with file_path.open('wb') as f:
+        with mof.local_path.open('wb') as f:
             assert download(url, f)
 
         got_count += 1
