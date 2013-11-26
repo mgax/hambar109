@@ -70,3 +70,13 @@ def upgrade(revision='head'):
 @model_manager.command
 def downgrade(revision):
     return alembic(['downgrade', revision])
+
+
+@model_manager.command
+def audit_files():
+    import subprocess
+    for mof in Mof.query.filter_by(year=2013):
+        if mof.local_path.isfile():
+            out = subprocess.check_output(['file', '-bi', mof.local_path])
+            if not out.startswith('application/pdf'):
+                print mof.pdf_filename
