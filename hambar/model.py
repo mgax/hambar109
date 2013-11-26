@@ -1,9 +1,11 @@
 import argparse
 import logging
 import uuid
+import flask
 from flask.ext.script import Manager
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.dialects.postgresql import UUID
+from path import path
 
 db = SQLAlchemy()
 
@@ -22,6 +24,15 @@ class Mof(db.Model):
     extension = db.Column(db.String)
     fetchme = db.Column(db.Boolean)
     text_json = db.Column(db.Text)
+
+    @property
+    def pdf_filename(self):
+        return 'mof{s.part}_{s.year}_{s.number:04d}.pdf'.format(s=self)
+
+    @property
+    def local_path(self):
+        base = path(flask.current_app.config['MOF_FILE_PATH'])
+        return base / self.pdf_filename
 
 
 model_manager = Manager()
