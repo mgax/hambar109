@@ -1,6 +1,6 @@
 alembic==0.6.0
 Flask-RQ==0.2
-Flask-Script==0.6.2
+Flask-Script==0.6.3
 Flask-SQLAlchemy==1.0
 Flask==0.10.1
 itsdangerous==0.23
