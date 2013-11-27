@@ -88,3 +88,6 @@ def audit_files():
             out = subprocess.check_output(['file', '-bi', mof.local_path])
             if not out.startswith('application/pdf'):
                 print mof.pdf_filename
+            else:
+                mof.in_local = True
+    db.session.commit()
