@@ -75,7 +75,15 @@ def fetch(count):
     got_count = 0
     while True:
         model.db.session.rollback()
-        mof_pool = model.Mof.query.filter_by(fetchme=True)
+        mof_pool = (
+            model.Mof.query
+            .filter(model.Mof.fetchme == True)
+            .filter(model.Mof.errors == None)
+            .filter(
+                (model.Mof.in_local == None) |
+                (model.Mof.in_local == False)
+            )
+        )
         remaining = mof_pool.count()
         if not remaining:
             logger.info("Nothing left to download!")
@@ -84,8 +92,6 @@ def fetch(count):
         lucky = random.randrange(remaining)
         mof = mof_pool.offset(lucky).first()
         url = create_mof_url(mof)
-        mof.fetchme = False
-        model.db.session.commit()
 
         if mof.local_path.exists():
             logger.info("Skipping %s, already exists", mof.pdf_filename.name)
@@ -99,7 +105,7 @@ def fetch(count):
             mof.errors = "not-pdf"
         else:
             mof.in_local = True
-
+            mof.fetchme = False
         model.db.session.commit()
 
         got_count += 1
