@@ -103,6 +103,7 @@ def fetch(count):
         out = subprocess.check_output(['file', '-bi', mof.local_path])
         if not out.startswith('application/pdf'):
             mof.errors = "not-pdf"
+            mof.local_path.unlink()
         else:
             mof.in_local = True
             mof.fetchme = False
