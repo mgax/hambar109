@@ -80,6 +80,10 @@ def fetch(count):
             .filter(model.Mof.fetchme == True)
             .filter(model.Mof.errors == None)
             .filter(
+                (model.Mof.unavailable == None) |
+                (model.Mof.unavailable == False)
+            )
+            .filter(
                 (model.Mof.in_local == None) |
                 (model.Mof.in_local == False)
             )
