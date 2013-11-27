@@ -45,7 +45,7 @@ class Mof(db.Model):
     @property
     def s3_url(self):
         base = flask.current_app.config['S3_BASE_URL']
-        return base + self.pdf_filename
+        return base + (self.s3_name or self.pdf_filename)
 
 
 model_manager = Manager()
