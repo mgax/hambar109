@@ -94,6 +94,14 @@ def fetch(count):
         with mof.local_path.open('wb') as f:
             assert download(url, f)
 
+        out = subprocess.check_output(['file', '-bi', mof.local_path])
+        if not out.startswith('application/pdf'):
+            mof.errors = "not-pdf"
+        else:
+            mof.in_local = True
+
+        model.db.session.commit()
+
         got_count += 1
         if got_count >= count:
             logger.info("Got %d files as requested. Stopping.", count)
