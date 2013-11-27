@@ -24,6 +24,10 @@ class Mof(db.Model):
     extension = db.Column(db.String)
     fetchme = db.Column(db.Boolean)
     text_json = db.Column(db.Text)
+    in_s3 = db.Column(db.Boolean)
+    in_local = db.Column(db.Boolean)
+    unavailable = db.Column(db.Boolean)
+    errors = db.Column(db.Text)
 
     @property
     def pdf_filename(self):
