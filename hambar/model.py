@@ -25,6 +25,7 @@ class Mof(db.Model):
     fetchme = db.Column(db.Boolean)
     text_json = db.Column(db.Text)
     in_s3 = db.Column(db.Boolean)
+    s3_name = db.Column(db.Text)
     in_local = db.Column(db.Boolean)
     unavailable = db.Column(db.Boolean)
     errors = db.Column(db.Text)
