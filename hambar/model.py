@@ -28,8 +28,8 @@ class Mof(db.Model):
     @property
     def pdf_filename(self):
         return (
-            'mof{s.part}_{s.year}_{s.number:04d}{s.extension}.pdf'
-            .format(s=self)
+            'mof{s.part}_{s.year}_{s.number:04d}{extension}.pdf'
+            .format(s=self, extension=self.extension or '')
         )
 
     @property
