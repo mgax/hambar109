@@ -98,7 +98,7 @@ def fetch(count):
         url = create_mof_url(mof)
 
         if mof.local_path.exists():
-            logger.info("Skipping %s, already exists", mof.pdf_filename.name)
+            logger.info("Skipping %s, already exists", mof.pdf_filename)
             continue
 
         with mof.local_path.open('wb') as f:
