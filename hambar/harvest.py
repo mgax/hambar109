@@ -144,14 +144,17 @@ class S3Bucket(object):
 @harvest_manager.command
 def s3upload():
     bucket = S3Bucket(flask.current_app.config['AWS_S3_BUCKET'])
-    mof_query = model.Mof.query.filter_by(in_local=True, in_s3=False)
+    mof_query = (
+        model.Mof.query
+        .filter_by(in_local=True)
+        .filter(model.Mof.s3_name == None)
+    )
     print mof_query.count(), "files to upload"
     for mof in mof_query:
         name = mof.pdf_filename
         print name
         bucket.upload(name, mof.local_path)
         mof.s3_name = name
-        mof.in_s3 = True
         model.db.session.commit()
 
 
