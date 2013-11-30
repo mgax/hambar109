@@ -47,6 +47,20 @@ class Mof(db.Model):
         base = flask.current_app.config['S3_BASE_URL']
         return base + (self.s3_name or self.pdf_filename)
 
+    def _get_text_row(self, create=False):
+        if self.text_row is None and create:
+            self.text_row = MofText()
+        return self.text_row
+
+    @property
+    def text(self):
+        row = self._get_text_row()
+        return row and row.text
+
+    @text.setter
+    def text(self, value):
+        self._get_text_row(True).text = value
+
 
 class MofText(db.Model):
 
