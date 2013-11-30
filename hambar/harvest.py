@@ -158,6 +158,42 @@ def s3upload():
         model.db.session.commit()
 
 
+@harvest_manager.command
+def text():
+    mof_query = (
+        model.Mof.query
+        .filter(model.Mof.text_row == None)
+        .filter((model.Mof.in_local == True) | (model.Mof.s3_name != None))
+        .filter(model.Mof.extension == None)
+    )
+    print mof_query.count(), "texts to add"
+    with temp_dir() as tmp:
+        for mof in mof_query:
+            pdf_path = tmp / mof.pdf_filename
+            text_path = tmp / 'plain.txt'
+
+            if mof.in_local:
+                print mof.pdf_filename, "local"
+                mof.local_path.copy(pdf_path)
+
+            else:
+                print mof.pdf_filename, "s3"
+                with pdf_path.open('wb') as f:
+                    print mof.id, mof.s3_url
+                    resp = requests.get(mof.s3_url, stream=True)
+                    assert resp.status_code == 200
+                    for chunk in FileWrapper(resp.raw):
+                        f.write(chunk)
+
+            subprocess.check_call(['pdftotext', pdf_path, text_path])
+            mof.text = text_path.text(encoding='utf-8')
+
+            pdf_path.unlink()
+            text_path.unlink()
+
+            model.db.session.commit()
+
+
 def ocr(image_path):
     cmd = ['tesseract', image_path, image_path, '-l', 'ron']
     with open('/dev/null', 'wb') as devnull:
