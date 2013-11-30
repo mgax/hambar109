@@ -44,8 +44,10 @@ class Mof(db.Model):
 
     @property
     def s3_url(self):
+        if self.s3_name is None:
+            return None
         base = flask.current_app.config['S3_BASE_URL']
-        return base + (self.s3_name or self.pdf_filename)
+        return base + self.s3_name
 
     def _get_text_row(self, create=False):
         if self.text_row is None and create:
