@@ -48,6 +48,13 @@ class Mof(db.Model):
         return base + (self.s3_name or self.pdf_filename)
 
 
+class MofText(db.Model):
+
+    id = db.Column(UUID, db.ForeignKey('mof.id'), primary_key=True)
+    text = db.Column(db.Text)
+    mof = db.relationship('Mof', backref=db.backref('text_row', uselist=False))
+
+
 model_manager = Manager()
 
 
