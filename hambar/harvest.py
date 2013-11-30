@@ -158,6 +158,29 @@ def s3upload():
         model.db.session.commit()
 
 
+@job
+def text_mof(mof_id):
+    mof = model.Mof.query.get(mof_id)
+    with temp_dir() as tmp:
+        text_path = tmp / 'plain.txt'
+
+        if mof.in_local:
+            pdf_path = mof.local_path
+
+        else:
+            pdf_path = tmp / mof.pdf_filename
+            with pdf_path.open('wb') as f:
+                resp = requests.get(mof.s3_url, stream=True)
+                assert resp.status_code == 200
+                for chunk in FileWrapper(resp.raw):
+                    f.write(chunk)
+
+        subprocess.check_call(['pdftotext', pdf_path, text_path])
+        mof.text = text_path.text(encoding='utf-8')
+
+    model.db.session.commit()
+
+
 @harvest_manager.command
 def text():
     mof_query = (
@@ -167,31 +190,8 @@ def text():
         .filter(model.Mof.extension == None)
     )
     print mof_query.count(), "texts to add"
-    with temp_dir() as tmp:
-        for mof in mof_query:
-            pdf_path = tmp / mof.pdf_filename
-            text_path = tmp / 'plain.txt'
-
-            if mof.in_local:
-                print mof.pdf_filename, "local"
-                mof.local_path.copy(pdf_path)
-
-            else:
-                print mof.pdf_filename, "s3"
-                with pdf_path.open('wb') as f:
-                    print mof.id, mof.s3_url
-                    resp = requests.get(mof.s3_url, stream=True)
-                    assert resp.status_code == 200
-                    for chunk in FileWrapper(resp.raw):
-                        f.write(chunk)
-
-            subprocess.check_call(['pdftotext', pdf_path, text_path])
-            mof.text = text_path.text(encoding='utf-8')
-
-            pdf_path.unlink()
-            text_path.unlink()
-
-            model.db.session.commit()
+    for mof in mof_query:
+        text_mof.delay(mof.id)
 
 
 def ocr(image_path):
