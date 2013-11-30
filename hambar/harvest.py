@@ -123,6 +123,38 @@ def fetch(count):
         time.sleep(t)
 
 
+class S3Bucket(object):
+
+    def __init__(self, bucket_name):
+        import boto
+        config = flask.current_app.config
+        s3 = boto.connect_s3(
+            config['AWS_ACCESS_KEY_ID'],
+            config['AWS_SECRET_ACCESS_KEY'],
+        )
+        self.bucket = s3.get_bucket(bucket_name)
+
+    def upload(self, name, local_path):
+        from boto.s3.key import Key
+        key = Key(self.bucket)
+        key.name = name
+        key.set_contents_from_filename(local_path)
+
+
+@harvest_manager.command
+def s3upload():
+    bucket = S3Bucket(flask.current_app.config['AWS_S3_BUCKET'])
+    mof_query = model.Mof.query.filter_by(in_local=True, in_s3=False)
+    print mof_query.count(), "files to upload"
+    for mof in mof_query:
+        name = mof.pdf_filename
+        print name
+        bucket.upload(name, mof.local_path)
+        mof.s3_name = name
+        mof.in_s3 = True
+        model.db.session.commit()
+
+
 def ocr(image_path):
     cmd = ['tesseract', image_path, image_path, '-l', 'ron']
     with open('/dev/null', 'wb') as devnull:
