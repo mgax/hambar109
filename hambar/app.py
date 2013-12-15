@@ -17,8 +17,8 @@ def robots_txt():
 
 @core.route('/_ping')
 def ping():
-    from hambar import model
-    count = model.db.session.query(model.Mof).count()
+    from hambar import models
+    count = models.db.session.query(models.Mof).count()
     return "hambar109 is up; %d mofs\n" % count
 
 
@@ -35,11 +35,11 @@ def bust_cache(endpoint, values):
 
 def create_app():
     from hambar import search
-    from hambar import model
+    from hambar import models
 
     app = flask.Flask(__name__, instance_relative_config=True)
     app.config.from_pyfile('settings.py', silent=True)
-    model.db.init_app(app)
+    models.db.init_app(app)
     app.register_blueprint(search.search_pages)
     app.register_blueprint(core)
     return app
@@ -48,12 +48,12 @@ def create_app():
 def create_manager(app):
     from flask.ext.script import Manager
     from hambar import search
-    from hambar import model
+    from hambar import models
     from hambar import harvest
 
     manager = Manager(app)
     search.register_commands(manager)
-    manager.add_command('db', model.model_manager)
+    manager.add_command('db', models.model_manager)
     manager.add_command('harvest', harvest.harvest_manager)
 
     @manager.command
