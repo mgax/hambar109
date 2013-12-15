@@ -66,7 +66,7 @@ def inject_mof_pdf_url():
 
 @search_pages.route('/document/<document_code>')
 def document_text(document_code):
-    from hambar.model import Document
+    from hambar.models import Document
     session = flask.current_app.extensions['hambar-db'].session
     doc = session.query(Document).filter_by(code=document_code).first()
     if doc is None:

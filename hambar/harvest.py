@@ -9,7 +9,7 @@ from flask.ext.script import Manager
 from werkzeug.wsgi import FileWrapper
 import requests
 from path import path
-from hambar import model
+from hambar import models
 from hambar.utils import get_result, temp_dir
 
 harvest_manager = Manager()
@@ -54,19 +54,19 @@ def download(url, out_file):
 @harvest_manager.option('-f', '--fetch', action='store_true')
 def new_editions(part, number, fetch=False):
     year = 2013
-    latest_known = (model.Mof.query
+    latest_known = (models.Mof.query
                              .filter_by(year=year, part=part)
                              .order_by('-number')
                              .first())
     next_number = 1 if latest_known is None else latest_known.number + 1
     n = 0
     for number in range(next_number, number + 1):
-        row = model.Mof(year=year, part=part, number=number)
+        row = models.Mof(year=year, part=part, number=number)
         if fetch:
             row.fetchme = True
-        model.db.session.add(row)
+        models.db.session.add(row)
         n += 1
-    model.db.session.commit()
+    models.db.session.commit()
     logger.info("Added %d records", n)
 
 
@@ -74,18 +74,18 @@ def new_editions(part, number, fetch=False):
 def fetch(count):
     got_count = 0
     while True:
-        model.db.session.rollback()
+        models.db.session.rollback()
         mof_pool = (
-            model.Mof.query
-            .filter(model.Mof.fetchme == True)
-            .filter(model.Mof.errors == None)
+            models.Mof.query
+            .filter(models.Mof.fetchme == True)
+            .filter(models.Mof.errors == None)
             .filter(
-                (model.Mof.unavailable == None) |
-                (model.Mof.unavailable == False)
+                (models.Mof.unavailable == None) |
+                (models.Mof.unavailable == False)
             )
             .filter(
-                (model.Mof.in_local == None) |
-                (model.Mof.in_local == False)
+                (models.Mof.in_local == None) |
+                (models.Mof.in_local == False)
             )
         )
         remaining = mof_pool.count()
@@ -111,7 +111,7 @@ def fetch(count):
         else:
             mof.in_local = True
             mof.fetchme = False
-        model.db.session.commit()
+        models.db.session.commit()
 
         got_count += 1
         if got_count >= count:
@@ -145,9 +145,9 @@ class S3Bucket(object):
 def s3upload():
     bucket = S3Bucket(flask.current_app.config['AWS_S3_BUCKET'])
     mof_query = (
-        model.Mof.query
+        models.Mof.query
         .filter_by(in_local=True)
-        .filter(model.Mof.s3_name == None)
+        .filter(models.Mof.s3_name == None)
     )
     print mof_query.count(), "files to upload"
     for mof in mof_query:
@@ -155,12 +155,12 @@ def s3upload():
         print name
         bucket.upload(name, mof.local_path)
         mof.s3_name = name
-        model.db.session.commit()
+        models.db.session.commit()
 
 
 @job
 def text_mof(mof_id):
-    mof = model.Mof.query.get(mof_id)
+    mof = models.Mof.query.get(mof_id)
     with temp_dir() as tmp:
         text_path = tmp / 'plain.txt'
 
@@ -178,16 +178,16 @@ def text_mof(mof_id):
         subprocess.check_call(['pdftotext', pdf_path, text_path])
         mof.text = text_path.text(encoding='utf-8')
 
-    model.db.session.commit()
+    models.db.session.commit()
 
 
 @harvest_manager.command
 def text():
     mof_query = (
-        model.Mof.query
-        .filter(model.Mof.text_row == None)
-        .filter((model.Mof.in_local == True) | (model.Mof.s3_name != None))
-        .filter(model.Mof.extension == None)
+        models.Mof.query
+        .filter(models.Mof.text_row == None)
+        .filter((models.Mof.in_local == True) | (models.Mof.s3_name != None))
+        .filter(models.Mof.extension == None)
     )
     print mof_query.count(), "texts to add"
     for mof in mof_query:
@@ -237,10 +237,10 @@ def get_images(part, year, number_range):
         t0 = time.time()
         kwargs = {'part': part, 'year': year, 'number': number}
 
-        mof = model.Mof.query.filter_by(**kwargs).first()
+        mof = models.Mof.query.filter_by(**kwargs).first()
         if mof is None:
-            mof = model.Mof(**kwargs)
-            model.db.session.add(mof)
+            mof = models.Mof(**kwargs)
+            models.db.session.add(mof)
 
         if mof.text_json is not None:
             continue
@@ -249,7 +249,7 @@ def get_images(part, year, number_range):
         pages = get_pages(**kwargs)
 
         mof.text_json = flask.json.dumps(pages)
-        model.db.session.commit()
+        models.db.session.commit()
 
         logger.info("Got %d/%d/%d, %d pages, %d seconds",
                     part, year, number, len(pages), time.time() - t0)
