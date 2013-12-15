@@ -18,8 +18,8 @@ def robots_txt():
 @core.route('/_ping')
 def ping():
     from hambar import model
-    model.db.session.query(model.Document).count()
-    return "hambar109 is up\n"
+    count = model.db.session.query(model.Mof).count()
+    return "hambar109 is up; %d mofs\n" % count
 
 
 @core.app_url_defaults
