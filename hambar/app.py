@@ -50,11 +50,13 @@ def create_manager(app):
     from hambar import search
     from hambar import models
     from hambar import harvest
+    from hambar import index
 
     manager = Manager(app)
     search.register_commands(manager)
     manager.add_command('db', models.model_manager)
     manager.add_command('harvest', harvest.harvest_manager)
+    manager.add_command('index', index.index_manager)
 
     @manager.command
     def worker():
