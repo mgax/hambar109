@@ -55,6 +55,12 @@ def add(number=10):
     es.indices.refresh(index=index)
 
 
+def search(query):
+    index = flask.current_app.config['ES_INDEX']
+    es = Elasticsearch()
+    return es.search(index=index, body={'query': {'match': {'text': query}}})
+
+
 @index_manager.command
 def test():
     index_name = 'moftest'
