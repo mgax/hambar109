@@ -1,5 +1,5 @@
 from alembic import context
-from hambar.model import db
+from hambar.models import db
 
 
 context.configure(connection=db.session.connection(),
