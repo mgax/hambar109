@@ -36,10 +36,12 @@ def bust_cache(endpoint, values):
 def create_app():
     from hambar import search
     from hambar import models
+    from hambar import index
 
     app = flask.Flask(__name__, instance_relative_config=True)
     app.config.from_pyfile('settings.py', silent=True)
     models.db.init_app(app)
+    index.index.init_app(app)
     app.register_blueprint(search.search_pages)
     app.register_blueprint(core)
     return app

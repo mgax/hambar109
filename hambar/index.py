@@ -1,5 +1,4 @@
 # encoding: utf-8
-import flask
 from flask.ext.script import Manager
 from elasticsearch import Elasticsearch
 from hambar import models
@@ -31,59 +30,76 @@ ES_INDEX_BODY = {
 }
 
 
+class Index(object):
+
+    def __init__(self, name=None):
+        self.name = name
+        self.doc_type = 'mof'
+        self.es = Elasticsearch()
+
+    def init_app(self, app):
+        self.name = app.config['ES_INDEX']
+
+    def initialize(self):
+        if self.name in self.es.indices.get_aliases():
+            print("deleting old index")
+            self.drop()
+        self.es.indices.create(index=self.name, body=ES_INDEX_BODY)
+
+    def drop(self):
+        self.es.indices.delete(self.name)
+
+    def add(self, doc_id, data):
+        self.es.index(
+            index=self.name,
+            doc_type=self.doc_type,
+            id=doc_id,
+            body=data,
+        )
+        self.es.indices.refresh(self.name)
+
+    def search(self, query):
+        return self.es.search(index=self.name, body={'query': query})
+
+
+index = Index()
+
+
 @index_manager.command
 def initialize():
-    index = flask.current_app.config['ES_INDEX']
-    es = Elasticsearch()
-    if es.indices.exists(index):
-        print("deleting old index")
-        es.indices.delete(index)
-    es.indices.create(index=index, body=ES_INDEX_BODY)
+    index.initialize()
 
 
 @index_manager.command
 def add(number=10):
-    index = flask.current_app.config['ES_INDEX']
-    es = Elasticsearch()
     for mof in models.Mof.query.limit(number):
-        es.index(
-            index=index,
-            doc_type='mof',
-            id=mof.id,
-            body={'text': mof.text},
-        )
-    es.indices.refresh(index=index)
+        index.add(mof.id, {'text': mof.text})
 
 
-def search(query):
-    index = flask.current_app.config['ES_INDEX']
-    es = Elasticsearch()
-    return es.search(index=index, body={'query': {'match': {'text': query}}})
+def search(text):
+    return index.search({'match': {'text': text}})
 
 
 @index_manager.command
 def test():
-    index_name = 'moftest'
-    es = Elasticsearch()
-    es.indices.create(index=index_name, body=ES_INDEX_BODY)
+    test_index = Index('moftest')
+    test_index.initialize()
 
-    def doc_ids(**body):
-        result = es.search(index=index_name, body=body)
+    def doc_ids(query):
+        result = test_index.search(query)
         return [hit['_id'] for hit in result['hits']['hits']]
 
-    def index(doc_id, **body):
-        es.index(index=index_name, doc_type='mof', id=doc_id, body=body)
+    def index(doc_id, **data):
+        test_index.add(doc_id, data)
 
     try:
         index('1', text=u"aici am niște cuvinte înțesate de diacritice, "
                         u"unele așa, altele înțepate și greşite.")
-        es.indices.refresh(index=index_name)
 
-        assert doc_ids() == ['1']
-        assert doc_ids(query={'match': {'text': u"altele"}}) == ['1']
-        assert doc_ids(query={'match': {'text': u"greşite"}}) == ['1']
-        assert doc_ids(query={'match': {'text': u"gresite"}}) == ['1']
-        assert doc_ids(query={'match': {'text': u"greșite"}}) == ['1']
+        assert doc_ids({'match': {'text': u"altele"}}) == ['1']
+        assert doc_ids({'match': {'text': u"greşite"}}) == ['1']
+        assert doc_ids({'match': {'text': u"gresite"}}) == ['1']
+        assert doc_ids({'match': {'text': u"greșite"}}) == ['1']
 
     finally:
-        es.indices.delete(index_name)
+        test_index.drop()
