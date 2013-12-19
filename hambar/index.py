@@ -73,21 +73,24 @@ def initialize():
     index.initialize()
 
 
+def _get_data(mof):
+    return {
+        'part': mof.part,
+        'year': mof.year,
+        'number': mof.number,
+        'text': mof.text,
+    }
+
+
 @index_manager.command
 def add(number=10):
     count = 0
-    for mof in models.Mof.query.filter_by(es_add=True).limit(number):
-        index.add(
-            mof.id,
-            {
-                'part': mof.part,
-                'year': mof.year,
-                'number': mof.number,
-                'text': mof.text,
-            },
-        )
+    query = models.Mof.query.filter_by(es_add=True).limit(number)
+    for mof in query:
+        index.add(mof.id, _get_data(mof))
         mof.es_add = False
         count += 1
+
     models.db.session.commit()
     print("Added %d documents" % count)
 
