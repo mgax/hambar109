@@ -1,4 +1,5 @@
 # encoding: utf-8
+import flask
 from flask.ext.script import Manager
 from elasticsearch import Elasticsearch
 
@@ -27,6 +28,16 @@ ES_INDEX_BODY = {
         },
     },
 }
+
+
+@index_manager.command
+def initialize():
+    index = flask.current_app.config['ES_INDEX']
+    es = Elasticsearch()
+    if es.indices.exists(index):
+        print("deleting old index")
+        es.indices.delete(index)
+    es.indices.create(index=index, body=ES_INDEX_BODY)
 
 
 @index_manager.command
