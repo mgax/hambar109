@@ -4,36 +4,38 @@ from elasticsearch import Elasticsearch
 index_manager = Manager()
 
 
-@index_manager.command
-def test():
-    test_index_name = 'moftest'
-    es = Elasticsearch()
-
-    es.indices.create(
-        index=test_index_name,
-        body={
-            'settings': {
-                'analysis': {
-                    'analyzer': {
-                        'ro': {
-                            'type': 'romanian',
-                            'filter': ['asciifolding'],
-                        },
-                    },
-                },
+ES_INDEX_SETTINGS = {
+    'analysis': {
+        'analyzer': {
+            'ro': {
+                'type': 'romanian',
+                'filter': ['asciifolding'],
             },
         },
+    },
+}
+
+
+@index_manager.command
+def test():
+    index_name = 'moftest'
+    es = Elasticsearch()
+    es.indices.create(
+        index=index_name,
+        body={'settings': ES_INDEX_SETTINGS},
     )
 
-    es.index(
-        index=test_index_name,
-        doc_type='mof',
-        id='01',
-        body={
-            'text': 'foo',
-        },
-    )
+    try:
+        es.index(
+            index=index_name,
+            doc_type='mof',
+            id='01',
+            body={
+                'text': 'foo',
+            },
+        )
 
-    print es.search()
+        print es.search()
 
-    es.indices.delete(test_index_name)
+    finally:
+        es.indices.delete(index_name)
