@@ -1,6 +1,6 @@
 # encoding: utf-8
 from flask.ext.script import Manager
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, helpers
 from hambar import models
 
 index_manager = Manager()
@@ -58,6 +58,22 @@ class Index(object):
         )
         self.es.indices.refresh(self.name)
 
+    def bulk_add(self, documents):
+        rv = helpers.bulk_index(
+            client=self.es,
+            docs=[
+                {
+                    '_id': doc_id,
+                    '_index': self.name,
+                    '_type': self.doc_type,
+                    '_source': data,
+                }
+                for doc_id, data in documents
+            ],
+        )
+        assert rv == (len(documents), [])
+        self.es.indices.refresh(self.name)
+
     def count(self):
         return self.es.count(index=self.name)['count']
 
@@ -86,10 +102,14 @@ def _get_data(mof):
 def add(number=10):
     count = 0
     query = models.Mof.query.filter_by(es_add=True).limit(number)
+
+    documents = []
     for mof in query:
-        index.add(mof.id, _get_data(mof))
+        documents.append((mof.id, _get_data(mof)))
         mof.es_add = False
         count += 1
+
+    index.bulk_add(documents)
 
     models.db.session.commit()
     print("Added %d documents" % count)
