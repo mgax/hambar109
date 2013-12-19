@@ -2,6 +2,7 @@
 import flask
 from flask.ext.script import Manager
 from elasticsearch import Elasticsearch
+from hambar import models
 
 index_manager = Manager()
 
@@ -38,6 +39,20 @@ def initialize():
         print("deleting old index")
         es.indices.delete(index)
     es.indices.create(index=index, body=ES_INDEX_BODY)
+
+
+@index_manager.command
+def add(number=10):
+    index = flask.current_app.config['ES_INDEX']
+    es = Elasticsearch()
+    for mof in models.Mof.query.limit(number):
+        es.index(
+            index=index,
+            doc_type='mof',
+            id=mof.id,
+            body={'text': mof.text},
+        )
+    es.indices.refresh(index=index)
 
 
 @index_manager.command
