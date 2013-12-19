@@ -77,7 +77,15 @@ def initialize():
 def add(number=10):
     count = 0
     for mof in models.Mof.query.filter_by(es_add=True).limit(number):
-        index.add(mof.id, {'text': mof.text})
+        index.add(
+            mof.id,
+            {
+                'part': mof.part,
+                'year': mof.year,
+                'number': mof.number,
+                'text': mof.text,
+            },
+        )
         mof.es_add = False
         count += 1
     models.db.session.commit()
