@@ -58,6 +58,9 @@ class Index(object):
         )
         self.es.indices.refresh(self.name)
 
+    def count(self):
+        return self.es.count(index=self.name)['count']
+
     def search(self, query):
         return self.es.search(index=self.name, body={'query': query})
 
