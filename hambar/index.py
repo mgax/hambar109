@@ -61,7 +61,7 @@ class Index(object):
     def bulk_add(self, documents):
         rv = helpers.bulk_index(
             client=self.es,
-            docs=[
+            docs=(
                 {
                     '_id': doc_id,
                     '_index': self.name,
@@ -69,9 +69,9 @@ class Index(object):
                     '_source': data,
                 }
                 for doc_id, data in documents
-            ],
+            ),
+            raise_on_error=True,
         )
-        assert rv == (len(documents), [])
         self.es.indices.refresh(self.name)
 
     def count(self):
@@ -98,21 +98,34 @@ def _get_data(mof):
     }
 
 
+def _iter_docs(number=None, chunk_size=50):
+    from sqlalchemy.orm import joinedload
+    count = 0
+    while True:
+        mof_list = (
+            models.Mof.query
+            .filter_by(es_add=True)
+            .options(joinedload(models.Mof.text_row))
+            .limit(chunk_size)
+            .all()
+        )
+        if not mof_list:
+            return
+
+        for mof in mof_list:
+            yield (mof.id, _get_data(mof))
+            mof.es_add = False
+            count += 1
+            if number and count >= number:
+                return
+
+        models.db.session.flush()
+
+
 @index_manager.command
 def add(number=10):
-    count = 0
-    query = models.Mof.query.filter_by(es_add=True).limit(number)
-
-    documents = []
-    for mof in query:
-        documents.append((mof.id, _get_data(mof)))
-        mof.es_add = False
-        count += 1
-
-    index.bulk_add(documents)
-
+    index.bulk_add(_iter_docs(number=int(number)))
     models.db.session.commit()
-    print("Added %d documents" % count)
 
 
 def search(text):
