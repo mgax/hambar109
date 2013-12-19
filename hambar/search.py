@@ -4,17 +4,12 @@ import os
 import logging
 from jinja2 import Markup
 from jinja2.filters import do_truncate
-
-from hambar.elastic import ElasticSearch
+from hambar import index
 
 DEBUG_SEARCH = (os.environ.get('DEBUG_SEARCH') == 'on')
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG if DEBUG_SEARCH else logging.INFO)
-
-
-es = ElasticSearch(os.environ.get('PUBDOCS_ES_URL'))
-
 
 search_pages = flask.Blueprint('search', __name__, template_folder='templates')
 
@@ -31,7 +26,8 @@ def search():
     q = args.get('q')
     if q:
         page = args.get('page', 1, type=int)
-        results = es.search(q, ['year', 'section', 'path'], page=page)
+        #results = es.search(q, ['year', 'section', 'path'], page=page)
+        results = index.search(q)
         next_url = flask.url_for('.search', page=page + 1, q=q)
 
     else:

@@ -27,6 +27,7 @@ class Mof(db.Model):
     in_local = db.Column(db.Boolean)
     unavailable = db.Column(db.Boolean)
     errors = db.Column(db.Text)
+    es_add = db.Column(db.Boolean, default=False, nullable=False)
 
     @property
     def pdf_filename(self):

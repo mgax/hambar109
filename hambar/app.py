@@ -18,8 +18,10 @@ def robots_txt():
 @core.route('/_ping')
 def ping():
     from hambar import models
-    count = models.db.session.query(models.Mof).count()
-    return "hambar109 is up; %d mofs\n" % count
+    from hambar import index
+    count_db = models.db.session.query(models.Mof).count()
+    count_es = index.index.count()
+    return "hambar109, mofs: %d in db, %d in es\n" % (count_db, count_es)
 
 
 @core.app_url_defaults
@@ -36,10 +38,12 @@ def bust_cache(endpoint, values):
 def create_app():
     from hambar import search
     from hambar import models
+    from hambar import index
 
     app = flask.Flask(__name__, instance_relative_config=True)
     app.config.from_pyfile('settings.py', silent=True)
     models.db.init_app(app)
+    index.index.init_app(app)
     app.register_blueprint(search.search_pages)
     app.register_blueprint(core)
     return app
@@ -50,11 +54,13 @@ def create_manager(app):
     from hambar import search
     from hambar import models
     from hambar import harvest
+    from hambar import index
 
     manager = Manager(app)
     search.register_commands(manager)
     manager.add_command('db', models.model_manager)
     manager.add_command('harvest', harvest.harvest_manager)
+    manager.add_command('index', index.index_manager)
 
     @manager.command
     def worker():
