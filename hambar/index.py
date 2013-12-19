@@ -72,8 +72,13 @@ def initialize():
 
 @index_manager.command
 def add(number=10):
-    for mof in models.Mof.query.limit(number):
+    count = 0
+    for mof in models.Mof.query.filter_by(es_add=True).limit(number):
         index.add(mof.id, {'text': mof.text})
+        mof.es_add = False
+        count += 1
+    models.db.session.commit()
+    print("Added %d documents" % count)
 
 
 def search(text):
