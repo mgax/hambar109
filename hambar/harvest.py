@@ -53,7 +53,7 @@ def download(url, out_file):
 @harvest_manager.option('part', type=int)
 @harvest_manager.option('-f', '--fetch', action='store_true')
 def new_editions(part, number, fetch=False):
-    year = 2013
+    year = 2014
     latest_known = (models.Mof.query
                              .filter_by(year=year, part=part)
                              .order_by('-number')
