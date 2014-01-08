@@ -45,12 +45,13 @@ def about():
     return flask.render_template('about.html')
 
 
-def _mof_pdf_url(code):
-    try:
-        section, year, _ = code.split('_', 2)
-    except:
+def _mof_pdf_url(id):
+    from hambar import models
+    mof = models.Mof.query.get(id)
+    if mof is None or not mof.s3_url:
         return None
-    return '/files/MOF/{0}/{1}/{2}.pdf'.format(section.upper(), year, code)
+
+    return mof.s3_url
 
 
 @search_pages.context_processor
