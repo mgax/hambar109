@@ -99,6 +99,8 @@ def fetch(count):
 
         if mof.local_path.exists():
             logger.info("Skipping %s, already exists", mof.pdf_filename)
+            mof.in_local = True
+            models.db.session.commit()
             continue
 
         with mof.local_path.open('wb') as f:
