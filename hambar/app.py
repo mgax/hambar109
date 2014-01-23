@@ -41,6 +41,7 @@ def create_app():
     from hambar import index
 
     app = flask.Flask(__name__, instance_relative_config=True)
+    app.config['ES_INDEX'] = 'hambar109'
     app.config.from_pyfile('settings.py', silent=True)
     models.db.init_app(app)
     index.index.init_app(app)
