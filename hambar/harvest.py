@@ -3,6 +3,7 @@ import logging
 import time
 from itertools import count
 import subprocess
+import tempfile
 import flask
 from flask.ext.rq import job
 from flask.ext.script import Manager
@@ -103,14 +104,17 @@ def fetch(count):
             models.db.session.commit()
             continue
 
-        with mof.local_path.open('wb') as f:
+        temp_path = path(tempfile.mkstemp(dir=mof.local_path.parent)[1])
+
+        with temp_path.open('wb') as f:
             assert download(url, f)
 
-        out = subprocess.check_output(['file', '-bi', mof.local_path])
+        out = subprocess.check_output(['file', '-bi', temp_path])
         if not out.startswith('application/pdf'):
             mof.errors = "not-pdf"
-            mof.local_path.unlink()
+            temp_path.unlink()
         else:
+            temp_path.rename(mof.local_path)
             mof.in_local = True
             mof.fetchme = False
         models.db.session.commit()
