@@ -50,25 +50,23 @@ def download(url, out_file):
         raise RuntimeError("Can't understand status code %d", resp.status_code)
 
 
-@harvest_manager.option('number', type=int)
-@harvest_manager.option('part', type=int)
-@harvest_manager.option('-f', '--fetch', action='store_true')
-def new_editions(part, number, fetch=False):
-    year = 2014
-    latest_known = (models.Mof.query
-                             .filter_by(year=year, part=part)
-                             .order_by('-number')
-                             .first())
-    next_number = 1 if latest_known is None else latest_known.number + 1
-    n = 0
-    for number in range(next_number, number + 1):
-        row = models.Mof(year=year, part=part, number=number)
-        if fetch:
-            row.fetchme = True
-        models.db.session.add(row)
-        n += 1
-    models.db.session.commit()
-    logger.info("Added %d records", n)
+@harvest_manager.option('spec', nargs='+')
+def new_editions(spec):
+    for spec_item in spec:
+        (part, number) = (int(i) for i in spec_item.split(':'))
+        year = 2014
+        latest_known = (models.Mof.query
+                                 .filter_by(year=year, part=part)
+                                 .order_by('-number')
+                                 .first())
+        next_number = 1 if latest_known is None else latest_known.number + 1
+        n = 0
+        for number in range(next_number, number + 1):
+            row = models.Mof(year=year, part=part, number=number, fetchme=True)
+            models.db.session.add(row)
+            n += 1
+        models.db.session.commit()
+        logger.info("Part %d: added %d records", part, n)
 
 
 @harvest_manager.option('count', type=int)
