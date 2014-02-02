@@ -138,11 +138,11 @@ class S3Bucket(object):
         )
         self.bucket = s3.get_bucket(bucket_name)
 
-    def upload(self, name, local_path):
+    def upload(self, name, data_file):
         from boto.s3.key import Key
         key = Key(self.bucket)
         key.name = name
-        key.set_contents_from_filename(local_path)
+        key.set_contents_from_file(data_file)
 
 
 @harvest_manager.command
@@ -157,7 +157,8 @@ def s3upload():
     for mof in mof_query:
         name = mof.pdf_filename
         print name
-        bucket.upload(name, mof.local_path)
+        with open(mof.local_path, 'rb') as f:
+            bucket.upload(name,m)
         mof.s3_name = name
         models.db.session.commit()
 
