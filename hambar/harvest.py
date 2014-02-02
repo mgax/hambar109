@@ -4,6 +4,7 @@ import time
 from itertools import count
 import subprocess
 import tempfile
+import csv
 import flask
 from flask.ext.rq import job
 from flask.ext.script import Manager
@@ -148,8 +149,9 @@ class S3Bucket(object):
 
 
 @harvest_manager.command
-def s3upload():
+def s3upload(index_year=None):
     bucket = S3Bucket(flask.current_app.config['AWS_S3_BUCKET'])
+    years_to_reindex = set()
     mof_query = (
         Mof.query
         .filter_by(in_local=True)
@@ -162,7 +164,27 @@ def s3upload():
         with open(mof.local_path, 'rb') as f:
             bucket.upload(name,m)
         mof.s3_name = name
+        years_to_reindex.add(mof.year)
         db.session.commit()
+
+    if index_year:
+        years_to_reindex.add(int(index_year))
+
+    csv_header = ['part', 'year', 'number', 's3_name']
+    for year in years_to_reindex:
+        print 'Reindexing year', year
+        with tempfile.TemporaryFile() as index_tmp:
+            index_csv = csv.DictWriter(index_tmp, csv_header)
+            year_query = (
+                Mof.query
+                .filter_by(year=year)
+                .filter(Mof.s3_name != None)
+                .order_by(Mof.part, Mof.number)
+            )
+            for mof in year_query:
+                index_csv.writerow({k: getattr(mof, k) for k in csv_header})
+            index_tmp.seek(0)
+            bucket.upload('%d.csv' % year, index_tmp)
 
 
 @job
