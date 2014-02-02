@@ -162,7 +162,7 @@ def s3upload(index_year=None):
         name = mof.pdf_filename
         print name
         with open(mof.local_path, 'rb') as f:
-            bucket.upload(name,m)
+            bucket.upload(name, f)
         mof.s3_name = name
         years_to_reindex.add(mof.year)
         db.session.commit()
