@@ -34,11 +34,11 @@ def create_mof_url(mof):
 def download(url, out_file):
     agent_url = flask.current_app.config.get('HAMBAR_AGENT_URL')
     if agent_url is None:
-        logger.info("Fetching %s (direct)", url)
+        logger.debug("Fetching %s (direct)", url)
         resp = requests.get(url, stream=True)
 
     else:
-        logger.info("Fetching %s (agent)", url)
+        logger.debug("Fetching %s (agent)", url)
         resp = requests.post(agent_url, data={'url': url}, stream=True)
 
     if resp.status_code == 404:
@@ -108,6 +108,7 @@ def fetch(count):
         temp_path = path(tempfile.mkstemp(dir=mof.local_path.parent)[1])
 
         with temp_path.open('wb') as f:
+            logger.info("Fetching %s", mof.pdf_filename)
             assert download(url, f)
 
         out = subprocess.check_output(['file', '-bi', temp_path])
