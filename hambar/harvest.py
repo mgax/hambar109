@@ -72,9 +72,8 @@ def new_editions(spec):
         logger.info("Part %d: added %d records", part, n)
 
 
-@harvest_manager.option('count', type=int)
-def fetch(count):
-    got_count = 0
+@harvest_manager.command
+def fetch():
     while True:
         db.session.rollback()
         mof_pool = (
@@ -120,11 +119,6 @@ def fetch(count):
             mof.in_local = True
             mof.fetchme = False
         db.session.commit()
-
-        got_count += 1
-        if got_count >= count:
-            logger.info("Got %d files as requested. Stopping.", count)
-            break
 
         t = random.randint(20, 30)
         logger.info("Sleeping for %d secods", t)
