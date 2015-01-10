@@ -55,7 +55,7 @@ def download(url, out_file):
 def new_editions(spec):
     for spec_item in spec:
         (part, number) = (int(i) for i in spec_item.split(':'))
-        year = 2014
+        year = 2015
         latest_known = (
             Mof.query
             .filter_by(year=year, part=part)
