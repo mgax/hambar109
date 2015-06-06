@@ -183,40 +183,52 @@ def s3upload(index_year=None):
 
 
 @job
-def text_mof(mof_id):
-    mof = Mof.query.get(mof_id)
+def text_mof(pdf_part, pdf_year, pdf_number, pdf_name):
+
+    s3_url = "https://mgax-mof.s3.amazonaws.com"
+
+    pdf_url = s3_url + "/" + pdf_name
+
     with temp_dir() as tmp:
+        pdf_local_path = tmp / pdf_name
         text_path = tmp / 'plain.txt'
 
-        if mof.in_local:
-            pdf_path = mof.local_path
+        with pdf_local_path.open('wb') as f:
+            resp = requests.get(pdf_url, stream=True)
+            assert resp.status_code == 200
+            for chunk in FileWrapper(resp.raw):
+                f.write(chunk)
 
-        else:
-            pdf_path = tmp / mof.pdf_filename
-            with pdf_path.open('wb') as f:
-                resp = requests.get(mof.s3_url, stream=True)
-                assert resp.status_code == 200
-                for chunk in FileWrapper(resp.raw):
-                    f.write(chunk)
+        subprocess.check_call(['pdftotext', pdf_local_path, text_path])
 
-        subprocess.check_call(['pdftotext', pdf_path, text_path])
-        mof.text = text_path.text(encoding='utf-8')
+        with text_path.open('r') as f:
+            raw_text = f.read()
 
-    db.session.commit()
+        json = dict([('part', int(pdf_part)),
+                     ('year', int(pdf_year)),
+                     ('number', int(pdf_number)),
+                     ('slug', pdf_name.split('.')[0]),
+                     ('text', raw_text)])
 
+        resp = requests.put(flask.current_app.config['ELASTIC_SEARCH_URL']
+                            + pdf_name.split('.')[0],
+                            data=flask.json.dumps(json))
+        assert 200 <= resp.status_code < 300, repr(resp)
 
 @harvest_manager.command
 def text():
-    mof_query = (
-        Mof.query
-        .filter(Mof.text_row == None)
-        .filter((Mof.in_local == True) | (Mof.s3_name != None))
-        .filter(Mof.extension == None)
-    )
-    print mof_query.count(), "texts to add"
-    for mof in mof_query:
-        text_mof.delay(mof.id)
+    csv_url = "https://mgax-mof.s3.amazonaws.com/2015.csv"
 
+    resp = requests.get(csv_url, stream=True)
+    assert resp.status_code == 200
+
+    for doc in resp.raw:
+        pdf_part = doc.split(',')[0].strip()
+        pdf_year = doc.split(',')[1].strip()
+        pdf_number = doc.split(',')[2].strip()
+        pdf_name = doc.split(',')[3].strip()
+
+        text_mof(pdf_part, pdf_year, pdf_number, pdf_name)
 
 def ocr(image_path):
     cmd = ['tesseract', image_path, image_path, '-l', 'ron']
