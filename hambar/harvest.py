@@ -228,7 +228,14 @@ def text():
         pdf_number = doc.split(',')[2].strip()
         pdf_name = doc.split(',')[3].strip()
 
-        text_mof(pdf_part, pdf_year, pdf_number, pdf_name)
+        # Check whether he have already processed this document.
+        resp = requests.head(flask.current_app.config['ELASTIC_SEARCH_URL']
+                             + pdf_name.split('.')[0],
+                             stream=True)
+        if resp.status_code == 200:
+            continue
+        else:
+            text_mof(pdf_part, pdf_year, pdf_number, pdf_name)
 
 def ocr(image_path):
     cmd = ['tesseract', image_path, image_path, '-l', 'ron']
