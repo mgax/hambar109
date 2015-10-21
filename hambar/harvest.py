@@ -120,7 +120,7 @@ def fetch():
             mof.fetchme = False
         db.session.commit()
 
-        t = random.randint(20, 30)
+        t = random.randint(5, 10)
         logger.info("Sleeping for %d secods", t)
         time.sleep(t)
 
