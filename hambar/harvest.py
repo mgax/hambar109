@@ -110,7 +110,7 @@ def fetch():
             logger.info("Fetching %s", mof.pdf_filename)
             assert download(url, f)
 
-        out = subprocess.check_output(['file', '-bi', temp_path])
+        out = subprocess.check_output(['file', '-bI', temp_path])
         if not out.startswith('application/pdf'):
             mof.errors = "not-pdf"
             temp_path.unlink()
